@@ -1,10 +1,20 @@
 import stripe
-from flask import request, redirect, jsonify, render_template, session, flash
+from flask import request, redirect, jsonify, render_template, session, flash, make_response
+from flask_wtf.csrf import validate_csrf, generate_csrf
+from wtforms.validators import ValidationError
 import os
 
 from auth.models import User
 from db.extensions import db
+from extensions import limiter
 from payments.models import Plan
+
+ACTIVE_STATUSES = ('active', 'trialing')
+BILLABLE_STATUSES = ('active', 'trialing', 'past_due')
+
+
+def as_dict(value):
+    return value.to_dict() if hasattr(value, 'to_dict') else dict(value)
 
 
 def payment_routes_init(app):
@@ -26,6 +36,14 @@ def payment_routes_init(app):
         })
         return prices.data[0].id if prices.data else None
 
+    def csrf_ok():
+        token = request.headers.get('X-CSRFToken') or request.form.get('csrf_token')
+        try:
+            validate_csrf(token)
+        except ValidationError:
+            return False
+        return True
+
     def move_user_to_plan(user, plan):
         current = db.session.get(Plan, user.plan_id)
         if current and plan.price_cents <= current.price_cents and plan.id != user.plan_id:
@@ -33,6 +51,29 @@ def payment_routes_init(app):
         user.plan_id = plan.id
         db.session.commit()
         return True
+
+    def private_page(html):
+        response = make_response(html)
+        response.headers['Cache-Control'] = 'no-store'
+        response.headers['X-Frame-Options'] = 'DENY'
+        response.headers['Content-Security-Policy'] = "frame-ancestors 'none'"
+        return response
+
+    def customers_for(user):
+        return client.v1.customers.list(params={'email': user.email, 'limit': 10}).data
+
+    def has_billable_subscription(customers):
+        for customer in customers:
+            subs = client.v1.subscriptions.list(params={'customer': customer.id, 'status': 'all', 'limit': 20})
+            if any(sub.status in BILLABLE_STATUSES for sub in subs.data):
+                return True
+        return False
+
+    def owned_subscription(user, subscription_id):
+        sub = client.v1.subscriptions.retrieve(subscription_id)
+        if as_dict(sub.metadata).get('user_id') != str(user.id):
+            return None
+        return sub
 
     @app.route('/upgrade-plan', methods=['GET'])
     def upgrade_plan():
@@ -42,49 +83,97 @@ def payment_routes_init(app):
 
         plans = Plan.query.order_by(Plan.price_cents).all()
         current = db.session.get(Plan, user.plan_id)
-        return render_template(
+        return private_page(render_template(
             'upgrade-plan.jinja',
             is_authenticated=True,
             user=user,
             plans=plans,
             current_plan=current,
-        )
+            csrf_token=generate_csrf(),
+            stripe_publishable_key=app.config['STRIPE_PUBLISHABLE_KEY'],
+        ))
 
-    @app.route('/upgrade-plan/<int:plan_id>', methods=['POST'])
-    def start_upgrade(plan_id):
+    @app.route('/upgrade-plan/<int:plan_id>/subscription', methods=['POST'])
+    @limiter.limit('10/minute')
+    def create_subscription(plan_id):
         user = logged_in_user()
         if not user:
-            return redirect('/')
+            return jsonify({'error': 'Sign in again to continue'}), 401
+        if not csrf_ok():
+            return jsonify({'error': 'Your session expired, please refresh the page'}), 400
 
         plan = db.session.get(Plan, plan_id)
         current = db.session.get(Plan, user.plan_id)
         if not plan or not current or plan.price_cents <= current.price_cents:
-            flash("That plan isn't an upgrade from your current one", "error")
-            return redirect('/upgrade-plan')
+            return jsonify({'error': "That plan isn't an upgrade from your current one"}), 400
 
         try:
             price_id = find_price_id(plan)
             if not price_id:
-                flash("This plan isn't available for checkout yet", "error")
-                return redirect('/upgrade-plan')
+                return jsonify({'error': "This plan isn't available for checkout yet"}), 409
+
+            customers = customers_for(user)
+            if has_billable_subscription(customers):
+                return jsonify({'error': 'You already have a subscription. Use Manage billing to change plans'}), 409
+
+            customer_id = customers[0].id if customers else client.v1.customers.create(params={
+                'email': user.email,
+                'metadata': {'user_id': str(user.id)},
+            }).id
 
             metadata = {'user_id': str(user.id), 'plan_id': str(plan.id)}
-            checkout = client.v1.checkout.sessions.create(params={
-                'mode': 'subscription',
-                'line_items': [{'price': price_id, 'quantity': 1}],
-                'customer_email': user.email,
-                'client_reference_id': str(user.id),
+            sub = client.v1.subscriptions.create(params={
+                'customer': customer_id,
+                'items': [{'price': price_id}],
+                'payment_behavior': 'default_incomplete',
+                'payment_settings': {'save_default_payment_method': 'on_subscription'},
+                'expand': ['latest_invoice.payments'],
                 'metadata': metadata,
-                'subscription_data': {'metadata': metadata},
-                'success_url': base_url() + '/upgrade-plan/success?session_id={CHECKOUT_SESSION_ID}',
-                'cancel_url': base_url() + '/upgrade-plan',
             })
         except stripe.StripeError as e:
-            app.logger.error("Checkout creation failed: %s", e)
-            flash("Could not start checkout, please try again", "error")
-            return redirect('/upgrade-plan')
+            app.logger.error("Subscription creation failed: %s", e)
+            return jsonify({'error': 'Could not start checkout, please try again'}), 502
 
-        return redirect(checkout.url, code=303)
+        invoice_payments = sub.latest_invoice.payments.data if sub.latest_invoice and sub.latest_invoice.payments else []
+        if not invoice_payments:
+            return jsonify({'error': 'Could not start checkout, please try again'}), 502
+
+        try:
+            payment_intent = client.v1.payment_intents.retrieve(invoice_payments[0].payment.payment_intent)
+        except stripe.StripeError as e:
+            app.logger.error("Payment intent lookup failed: %s", e)
+            return jsonify({'error': 'Could not start checkout, please try again'}), 502
+
+        response = jsonify({
+            'subscriptionId': sub.id,
+            'clientSecret': payment_intent.client_secret,
+            'status': sub.status,
+        })
+        response.headers['Cache-Control'] = 'no-store'
+        return response
+
+    @app.route('/upgrade-plan/subscription/cancel', methods=['POST'])
+    def cancel_pending_subscription():
+        user = logged_in_user()
+        if not user:
+            return jsonify({'error': 'Sign in again to continue'}), 401
+        if not csrf_ok():
+            return jsonify({'error': 'Your session expired, please refresh the page'}), 400
+
+        subscription_id = (request.get_json(silent=True) or {}).get('subscriptionId', '')
+        if not isinstance(subscription_id, str) or not subscription_id.startswith('sub_'):
+            return jsonify({'error': 'Invalid request'}), 400
+
+        try:
+            sub = owned_subscription(user, subscription_id)
+            if not sub or sub.status != 'incomplete':
+                return jsonify({'error': 'Subscription not found'}), 404
+            client.v1.subscriptions.cancel(subscription_id)
+        except stripe.StripeError as e:
+            app.logger.error("Pending subscription cancel failed: %s", e)
+            return jsonify({'error': 'Could not update your subscription, please try again'}), 502
+
+        return jsonify({'status': 'canceled'})
 
     @app.route('/upgrade-plan/success', methods=['GET'])
     def upgrade_success():
@@ -92,22 +181,26 @@ def payment_routes_init(app):
         if not user:
             return redirect('/')
 
-        session_id = request.args.get('session_id')
-        if not session_id:
+        subscription_id = request.args.get('subscription', '')
+        if not subscription_id.startswith('sub_'):
             return redirect('/upgrade-plan')
 
         try:
-            checkout = client.v1.checkout.sessions.retrieve(session_id)
+            sub = owned_subscription(user, subscription_id)
         except stripe.StripeError as e:
-            app.logger.error("Could not load checkout session: %s", e)
+            app.logger.error("Could not load subscription: %s", e)
             flash("We couldn't confirm your payment, please try again", "error")
             return redirect('/upgrade-plan')
 
-        if checkout.metadata.get('user_id') != str(user.id) or checkout.status != 'complete':
-            flash("Your payment hasn't been confirmed yet", "warning")
+        if not sub:
+            flash("We couldn't confirm your payment, please try again", "error")
             return redirect('/upgrade-plan')
 
-        plan = db.session.get(Plan, int(checkout.metadata['plan_id']))
+        if sub.status not in ACTIVE_STATUSES:
+            flash("Your payment is still processing, your plan will update shortly", "warning")
+            return redirect('/upgrade-plan')
+
+        plan = db.session.get(Plan, int(as_dict(sub.metadata)['plan_id']))
         if plan and move_user_to_plan(user, plan):
             flash(f"You're now on the {plan.name} plan", "success")
         return redirect('/upgrade-plan')
@@ -117,15 +210,18 @@ def payment_routes_init(app):
         user = logged_in_user()
         if not user:
             return redirect('/')
+        if not csrf_ok():
+            flash("Your session expired, please try again", "error")
+            return redirect('/upgrade-plan')
 
         try:
-            customers = client.v1.customers.list(params={'email': user.email, 'limit': 1})
-            if not customers.data:
+            customers = customers_for(user)
+            if not customers:
                 flash("No billing account found for this email yet", "warning")
                 return redirect('/upgrade-plan')
 
             portal = client.v1.billing_portal.sessions.create(params={
-                'customer': customers.data[0].id,
+                'customer': customers[0].id,
                 'return_url': base_url() + '/upgrade-plan',
             })
         except stripe.StripeError as e:
@@ -149,15 +245,18 @@ def payment_routes_init(app):
         except (ValueError, stripe.SignatureVerificationError):
             return jsonify({'error': 'invalid signature'}), 400
 
-        obj = event['data']['object']
+        obj = as_dict(event['data']['object'])
+        event_type = event['type']
 
-        if event['type'] == 'checkout.session.completed' and obj.get('mode') == 'subscription':
-            user = db.session.get(User, int(obj['metadata']['user_id']))
-            plan = db.session.get(Plan, int(obj['metadata']['plan_id']))
-            if user and plan:
-                move_user_to_plan(user, plan)
+        if event_type in ('customer.subscription.created', 'customer.subscription.updated'):
+            metadata = obj.get('metadata', {})
+            if obj.get('status') in ACTIVE_STATUSES and metadata.get('user_id') and metadata.get('plan_id'):
+                user = db.session.get(User, int(metadata['user_id']))
+                plan = db.session.get(Plan, int(metadata['plan_id']))
+                if user and plan:
+                    move_user_to_plan(user, plan)
 
-        elif event['type'] == 'customer.subscription.deleted':
+        elif event_type == 'customer.subscription.deleted':
             user_id = obj.get('metadata', {}).get('user_id')
             user = db.session.get(User, int(user_id)) if user_id else None
             if user:

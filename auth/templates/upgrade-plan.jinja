@@ -1,63 +1,349 @@
 {% extends 'base.jinja' %}
 
 {% block content %}
-<div class="pt-24 p-8 flex flex-col gap-8 max-w-6xl mx-auto">
+{% set upgrades = plans|selectattr('price_cents', 'gt', current_plan.price_cents)|list %}
+<div class="pt-24 pb-16 px-6 sm:px-8 max-w-6xl mx-auto flex flex-col gap-8">
     <div class="flex flex-col gap-2">
-        <p class="text-3xl sm:text-4xl md:text-5xl font-extrabold transition-colors duration-150"
+        <p class="text-3xl sm:text-4xl font-extrabold transition-colors duration-150"
            :class="isDark ? 'text-white' : 'text-black'">Upgrade Plan</p>
         <p class="transition-colors duration-150" :class="isDark ? 'text-neutral-400' : 'text-neutral-600'">
-            You're on the <span class="font-bold">{{ current_plan.name }}</span> plan.
+            You're on the <span class="font-bold">{{ current_plan.name|e }}</span> plan.
         </p>
     </div>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% for category, message in messages %}
             <div class="text-sm {% if category == 'success' %}text-green-500{% elif category == 'error' %}text-red-500{% elif category == 'warning' %}text-yellow-600{% else %}text-blue-500{% endif %}">
-                {{ message }}
+                {{ message|e }}
             </div>
         {% endfor %}
     {% endwith %}
 
-    <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {% for plan in plans %}
-            {% set is_current = plan.id == user.plan_id %}
-            {% set is_upgrade = plan.price_cents > current_plan.price_cents %}
-            <div class="p-4 flex flex-col gap-4 border rounded-lg shadow-sm transition-colors duration-150"
-                 :class="isDark ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-neutral-300'">
-                <p class="tracking-widest uppercase" :class="isDark ? 'text-neutral-500' : 'text-neutral-600'">{{ plan.name }}</p>
-                <p class="text-4xl font-bold" :class="isDark ? 'text-white' : 'text-black'">${{ "%.0f"|format(plan.price_cents/100) }}</p>
-                <p class="text-xs bg-green-500/10 p-1 w-fit px-2 text-green-600 rounded-xl">{{ plan.overage }}</p>
-                <div class="space-y-2">
-                    {% for feature in plan.features %}
-                        <div class="flex gap-2" :class="isDark ? 'text-neutral-200' : 'text-neutral-700'">
-                            <span class="text-green-500">✓</span>{{ feature }}
+    <div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_380px] items-start">
+        <div class="flex flex-col gap-5">
+            <p class="text-sm uppercase tracking-widest transition-colors duration-150"
+               :class="isDark ? 'text-neutral-500' : 'text-neutral-500'">Choose a plan</p>
+
+            <div class="grid gap-4 sm:grid-cols-2">
+                {% for plan in plans %}
+                    {% set upgradeable = plan.price_cents > current_plan.price_cents %}
+                    <label class="js-plan-tile relative flex flex-col gap-3 p-5 rounded-xl border transition duration-150 {{ 'cursor-pointer' if upgradeable else 'opacity-60 cursor-default' }}"
+                           :class="isDark ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-neutral-300'">
+                        <div class="flex items-center justify-between gap-4">
+                            <span class="text-xs uppercase tracking-widest" :class="isDark ? 'text-neutral-400' : 'text-neutral-600'">{{ plan.name|e }}</span>
+                            {% if plan.id == user.plan_id %}
+                                <span class="text-xs px-2 py-1 rounded-full border" :class="isDark ? 'border-neutral-700 text-neutral-300' : 'border-neutral-300 text-neutral-700'">Current</span>
+                            {% elif upgradeable %}
+                                <span class="js-radio-dot w-4 h-4 rounded-full border-2 transition duration-150 border-neutral-400"></span>
+                            {% else %}
+                                <span class="text-xs" :class="isDark ? 'text-neutral-500' : 'text-neutral-500'">Included</span>
+                            {% endif %}
                         </div>
-                    {% endfor %}
-                </div>
-                <div class="mt-auto">
-                    {% if is_current %}
-                        <p class="text-center p-2 rounded-lg border" :class="isDark ? 'border-neutral-700 text-neutral-300' : 'border-neutral-300 text-neutral-700'">Current plan</p>
-                    {% elif is_upgrade %}
-                        <form action="/upgrade-plan/{{ plan.id }}" method="POST">
-                            <button type="submit" class="w-full p-2 bg-orange-600 text-white rounded-lg cursor-pointer text-lg hover:opacity-90">Upgrade to {{ plan.name }}</button>
-                        </form>
-                    {% endif %}
-                </div>
+
+                        <p class="text-3xl font-bold" :class="isDark ? 'text-white' : 'text-black'">
+                            ${{ "%.0f"|format(plan.price_cents/100) }}<span class="text-sm font-normal" :class="isDark ? 'text-neutral-400' : 'text-neutral-600'"> /mo</span>
+                        </p>
+
+                        <p class="text-xs text-green-600 bg-green-500/10 rounded-full px-2 py-1 w-fit">{{ plan.overage|e }}</p>
+
+                        <ul class="flex flex-col gap-1 text-sm" :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">
+                            {% for feature in plan.features %}
+                                <li class="flex gap-2"><span class="text-green-500">✓</span>{{ feature|e }}</li>
+                            {% endfor %}
+                        </ul>
+
+                        {% if upgradeable %}
+                            <input type="radio" name="plan" value="{{ plan.id }}" class="sr-only js-plan-input"
+                                   data-plan-name="{{ plan.name|e }}"
+                                   data-price="{{ '%.2f'|format(plan.price_cents/100) }}"
+                                   data-overage="{{ plan.overage|e }}">
+                        {% endif %}
+                    </label>
+                {% endfor %}
             </div>
-        {% endfor %}
-    </div>
 
-    {% if current_plan.price_cents > 0 %}
-        <div class="flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between p-4 border rounded-lg"
-             :class="isDark ? 'border-neutral-800 text-neutral-300' : 'border-neutral-300 text-neutral-700'">
-            <p>Need a lower plan or want to cancel?</p>
-            <form action="/billing-portal" method="POST">
-                <button type="submit" class="p-2 px-4 rounded-lg border cursor-pointer hover:opacity-80"
-                        :class="isDark ? 'border-neutral-700' : 'border-neutral-300'">Manage billing</button>
-            </form>
+            {% if current_plan.price_cents > 0 %}
+                <div class="flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between p-4 border rounded-xl"
+                     :class="isDark ? 'border-neutral-800 text-neutral-300' : 'border-neutral-300 text-neutral-700'">
+                    <p>Need a lower plan or want to cancel?</p>
+                    <form action="/billing-portal" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <button type="submit" class="p-2 px-4 rounded-lg border cursor-pointer hover:opacity-80 transition duration-150"
+                                :class="isDark ? 'border-neutral-700' : 'border-neutral-300'">Manage billing</button>
+                    </form>
+                </div>
+            {% endif %}
+
+            <a href="/settings" class="hover:opacity-80 transition duration-150" :class="isDark ? 'text-neutral-400' : 'text-neutral-600'">← Back to settings</a>
         </div>
-    {% endif %}
 
-    <a href="/settings" class="hover:opacity-80" :class="isDark ? 'text-neutral-400' : 'text-neutral-600'">← Back to settings</a>
+        <aside class="lg:sticky lg:top-28 flex flex-col gap-5 p-6 rounded-xl border shadow-md transition-colors duration-150"
+               :class="isDark ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-neutral-300'">
+            {% if upgrades %}
+                <div class="flex flex-col gap-1">
+                    <p class="text-lg font-bold" :class="isDark ? 'text-white' : 'text-black'">Order summary</p>
+                    <p class="text-sm" :class="isDark ? 'text-neutral-400' : 'text-neutral-600'">Secure payment powered by Stripe</p>
+                </div>
+
+                <div class="flex flex-col gap-3 text-sm border-y py-4" :class="isDark ? 'border-neutral-800 text-neutral-300' : 'border-neutral-200 text-neutral-700'">
+                    <div class="flex justify-between gap-4">
+                        <span>Plan</span>
+                        <span id="summary-plan" class="font-semibold" :class="isDark ? 'text-white' : 'text-black'"></span>
+                    </div>
+                    <div class="flex justify-between gap-4">
+                        <span>Price</span>
+                        <span id="summary-price"></span>
+                    </div>
+                    <div class="flex justify-between gap-4">
+                        <span>Usage</span>
+                        <span id="summary-overage" class="text-right"></span>
+                    </div>
+                    <div class="flex justify-between gap-4 font-bold" :class="isDark ? 'text-white' : 'text-black'">
+                        <span>Due today</span>
+                        <span id="summary-due"></span>
+                    </div>
+                </div>
+
+                <button type="button" id="continue-btn"
+                        class="w-full p-3 bg-orange-600 text-white rounded-lg cursor-pointer text-lg hover:opacity-90 transition duration-150 disabled:opacity-60 disabled:cursor-not-allowed">Continue to payment</button>
+
+                <div id="payment-area" class="hidden flex-col gap-4">
+                    <div id="payment-element" class="min-h-[260px]"></div>
+                    <p id="payment-error" class="hidden text-sm text-red-500"></p>
+                    <button type="button" id="pay-btn"
+                            class="w-full p-3 bg-orange-600 text-white rounded-lg cursor-pointer text-lg hover:opacity-90 transition duration-150 disabled:opacity-60 disabled:cursor-not-allowed">Pay <span id="pay-amount"></span> / month</button>
+                    <button type="button" id="change-btn"
+                            class="text-sm hover:opacity-80 transition duration-150 cursor-pointer"
+                            :class="isDark ? 'text-neutral-400' : 'text-neutral-600'">Change plan</button>
+                </div>
+
+                <p class="text-xs" :class="isDark ? 'text-neutral-500' : 'text-neutral-500'">
+                    Card details are entered directly with Stripe and never reach Bibliove servers. Your plan updates after payment succeeds.
+                </p>
+            {% else %}
+                <p class="text-lg font-bold" :class="isDark ? 'text-white' : 'text-black'">You're on the highest plan</p>
+                <p class="text-sm" :class="isDark ? 'text-neutral-400' : 'text-neutral-600'">There's nothing to upgrade to right now.</p>
+            {% endif %}
+        </aside>
+    </div>
 </div>
+
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+    (function () {
+        const csrfToken = {{ csrf_token|tojson }};
+        const publishableKey = {{ stripe_publishable_key|tojson }};
+        const inputs = Array.from(document.querySelectorAll('.js-plan-input'));
+        if (!inputs.length) {
+            return;
+        }
+
+        const tiles = inputs.map((input) => input.closest('.js-plan-tile'));
+        const continueBtn = document.getElementById('continue-btn');
+        const payBtn = document.getElementById('pay-btn');
+        const changeBtn = document.getElementById('change-btn');
+        const paymentArea = document.getElementById('payment-area');
+        const paymentMount = document.getElementById('payment-element');
+        const paymentError = document.getElementById('payment-error');
+        const summaryPlan = document.getElementById('summary-plan');
+        const summaryPrice = document.getElementById('summary-price');
+        const summaryOverage = document.getElementById('summary-overage');
+        const summaryDue = document.getElementById('summary-due');
+        const payAmount = document.getElementById('pay-amount');
+
+        const stripe = publishableKey ? Stripe(publishableKey) : null;
+        const isDark = localStorage.getItem('theme') === 'dark';
+
+        let pendingSubscriptionId = null;
+        let elements = null;
+        let paymentElement = null;
+        let requestCount = 0;
+
+        function selectedInput() {
+            return inputs.find((input) => input.checked) || null;
+        }
+
+        function showError(message) {
+            paymentError.textContent = message;
+            paymentError.classList.toggle('hidden', !message);
+        }
+
+        function paintTiles() {
+            inputs.forEach((input, index) => {
+                const tile = tiles[index];
+                const dot = tile.querySelector('.js-radio-dot');
+                tile.classList.toggle('border-orange-600', input.checked);
+                tile.classList.toggle('ring-2', input.checked);
+                tile.classList.toggle('ring-orange-600/30', input.checked);
+                if (dot) {
+                    dot.classList.toggle('bg-orange-600', input.checked);
+                    dot.classList.toggle('border-orange-600', input.checked);
+                    dot.classList.toggle('border-neutral-400', !input.checked);
+                }
+            });
+        }
+
+        function paintSummary(input) {
+            summaryPlan.textContent = input.dataset.planName;
+            summaryPrice.textContent = '$' + input.dataset.price + ' / month';
+            summaryOverage.textContent = input.dataset.overage;
+            summaryDue.textContent = '$' + input.dataset.price;
+            payAmount.textContent = '$' + input.dataset.price;
+        }
+
+        function cancelPending(subscriptionId) {
+            if (!subscriptionId) {
+                return;
+            }
+            fetch('/upgrade-plan/subscription/cancel', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,
+                },
+                body: JSON.stringify({ subscriptionId: subscriptionId }),
+            }).catch(() => {});
+        }
+
+        function resetPayment() {
+            requestCount += 1;
+            if (paymentElement) {
+                paymentElement.destroy();
+                paymentElement = null;
+            }
+            elements = null;
+            paymentMount.replaceChildren();
+            paymentArea.classList.add('hidden');
+            continueBtn.classList.remove('hidden');
+            continueBtn.disabled = false;
+            payBtn.disabled = false;
+            showError('');
+            const stale = pendingSubscriptionId;
+            pendingSubscriptionId = null;
+            cancelPending(stale);
+        }
+
+        function selectPlan(input) {
+            paintTiles();
+            paintSummary(input);
+            resetPayment();
+        }
+
+        function appearance() {
+            return {
+                theme: isDark ? 'night' : 'stripe',
+                variables: {
+                    colorPrimary: '#ea580c',
+                    borderRadius: '8px',
+                    fontFamily: 'Inter, sans-serif',
+                },
+            };
+        }
+
+        async function startPayment() {
+            const input = selectedInput();
+            if (!input) {
+                return;
+            }
+            if (!stripe) {
+                showError('Payments are unavailable right now, please try again later');
+                return;
+            }
+
+            const token = ++requestCount;
+            continueBtn.disabled = true;
+            showError('');
+
+            let data = {};
+            let message = '';
+            try {
+                const response = await fetch('/upgrade-plan/' + encodeURIComponent(input.value) + '/subscription', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRFToken': csrfToken,
+                    },
+                });
+                data = await response.json().catch(() => ({}));
+                if (response.status === 429) {
+                    message = 'Too many attempts, please wait a minute and try again';
+                } else if (!response.ok) {
+                    message = data.error || 'Something went wrong, please try again';
+                }
+            } catch (error) {
+                message = 'Network problem, please check your connection and try again';
+            }
+
+            if (token !== requestCount) {
+                cancelPending(data.subscriptionId);
+                return;
+            }
+
+            continueBtn.disabled = false;
+            if (message) {
+                showError(message);
+                return;
+            }
+
+            if (data.status === 'active') {
+                window.location.href = '/upgrade-plan/success?subscription=' + encodeURIComponent(data.subscriptionId);
+                return;
+            }
+
+            pendingSubscriptionId = data.subscriptionId;
+            paymentArea.classList.remove('hidden');
+            continueBtn.classList.add('hidden');
+            try {
+                elements = stripe.elements({ clientSecret: data.clientSecret, appearance: appearance() });
+                paymentElement = elements.create('payment', { layout: 'tabs' });
+                paymentElement.mount(paymentMount);
+            } catch (error) {
+                showError('Payment form could not be loaded, please try again');
+            }
+        }
+
+        async function pay() {
+            if (!elements || !pendingSubscriptionId) {
+                return;
+            }
+            payBtn.disabled = true;
+            showError('');
+
+            const returnUrl = window.location.origin + '/upgrade-plan/success?subscription=' + encodeURIComponent(pendingSubscriptionId);
+            try {
+                const result = await stripe.confirmPayment({
+                    elements: elements,
+                    confirmParams: { return_url: returnUrl },
+                    redirect: 'if_required',
+                });
+                if (result.error) {
+                    showError(result.error.message || 'Payment failed, please try again');
+                    payBtn.disabled = false;
+                    return;
+                }
+                window.location.href = returnUrl;
+            } catch (error) {
+                showError('Payment could not be completed, please try again');
+                payBtn.disabled = false;
+            }
+        }
+
+        inputs.forEach((input) => {
+            input.addEventListener('change', () => {
+                if (input.checked) {
+                    selectPlan(input);
+                }
+            });
+        });
+        continueBtn.addEventListener('click', startPayment);
+        payBtn.addEventListener('click', pay);
+        changeBtn.addEventListener('click', resetPayment);
+
+        inputs[0].checked = true;
+        selectPlan(inputs[0]);
+    })();
+</script>
 {% endblock %}
