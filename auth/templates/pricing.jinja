@@ -28,7 +28,7 @@
                         <div :class="isDark ? 'text-neutral-200' : 'text-neutral-700'" class="flex gap-2"><div class="text-green-500">✓ </div>{{f}}</div>
                     {%endfor%}
                 </div>
-                <a href="{{ '/register?plan={}'.format(plan.name | lower) if not is_authenticated}}" class="{{'hidden' if user and loop.index == user.plan_id+1 else ''}} mt-auto text-center p-2 bg-orange-600 text-white rounded-lg cursor-pointer text-lg">
+                <a href="{{ '/register?plan={}'.format(plan.name | lower) if not is_authenticated else '/upgrade-plan' }}" class="{{'hidden' if user and loop.index == user.plan_id+1 else ''}} mt-auto text-center p-2 bg-orange-600 text-white rounded-lg cursor-pointer text-lg">
                 <span>{{ 'Get Started' if not is_authenticated else 'Downgrade' if loop.index < user.plan_id+1 else 'Upgrade' }}</span>
                 </a>
             </div>

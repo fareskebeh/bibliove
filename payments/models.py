@@ -10,3 +10,7 @@ class Plan(db.Model):
     overage=db.Column(db.String(128))
     features=db.Column(JSON)
     quota_limit=db.Column(db.Integer)
+
+    @property
+    def stripe_lookup_key(self):
+        return f"bibliove_{self.name.lower()}"

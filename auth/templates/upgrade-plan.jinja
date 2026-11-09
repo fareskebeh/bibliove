@@ -1,15 +1,63 @@
-{% extends 'base.jinja'%}
+{% extends 'base.jinja' %}
 
-{% block content%}
-
-    <div class='pt-16'>
-        <div class='p-8'>
-            <p class='text-3xl sm:text-4xl md:text-5xl font-extrabold'>Upgrade Plan</p>
-
-            <div>
-                <p>Your current plan</p>
-            </div>
-        </div>    
+{% block content %}
+<div class="pt-24 p-8 flex flex-col gap-8 max-w-6xl mx-auto">
+    <div class="flex flex-col gap-2">
+        <p class="text-3xl sm:text-4xl md:text-5xl font-extrabold transition-colors duration-150"
+           :class="isDark ? 'text-white' : 'text-black'">Upgrade Plan</p>
+        <p class="transition-colors duration-150" :class="isDark ? 'text-neutral-400' : 'text-neutral-600'">
+            You're on the <span class="font-bold">{{ current_plan.name }}</span> plan.
+        </p>
     </div>
 
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <div class="text-sm {% if category == 'success' %}text-green-500{% elif category == 'error' %}text-red-500{% elif category == 'warning' %}text-yellow-600{% else %}text-blue-500{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endwith %}
+
+    <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {% for plan in plans %}
+            {% set is_current = plan.id == user.plan_id %}
+            {% set is_upgrade = plan.price_cents > current_plan.price_cents %}
+            <div class="p-4 flex flex-col gap-4 border rounded-lg shadow-sm transition-colors duration-150"
+                 :class="isDark ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-neutral-300'">
+                <p class="tracking-widest uppercase" :class="isDark ? 'text-neutral-500' : 'text-neutral-600'">{{ plan.name }}</p>
+                <p class="text-4xl font-bold" :class="isDark ? 'text-white' : 'text-black'">${{ "%.0f"|format(plan.price_cents/100) }}</p>
+                <p class="text-xs bg-green-500/10 p-1 w-fit px-2 text-green-600 rounded-xl">{{ plan.overage }}</p>
+                <div class="space-y-2">
+                    {% for feature in plan.features %}
+                        <div class="flex gap-2" :class="isDark ? 'text-neutral-200' : 'text-neutral-700'">
+                            <span class="text-green-500">✓</span>{{ feature }}
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="mt-auto">
+                    {% if is_current %}
+                        <p class="text-center p-2 rounded-lg border" :class="isDark ? 'border-neutral-700 text-neutral-300' : 'border-neutral-300 text-neutral-700'">Current plan</p>
+                    {% elif is_upgrade %}
+                        <form action="/upgrade-plan/{{ plan.id }}" method="POST">
+                            <button type="submit" class="w-full p-2 bg-orange-600 text-white rounded-lg cursor-pointer text-lg hover:opacity-90">Upgrade to {{ plan.name }}</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    {% if current_plan.price_cents > 0 %}
+        <div class="flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between p-4 border rounded-lg"
+             :class="isDark ? 'border-neutral-800 text-neutral-300' : 'border-neutral-300 text-neutral-700'">
+            <p>Need a lower plan or want to cancel?</p>
+            <form action="/billing-portal" method="POST">
+                <button type="submit" class="p-2 px-4 rounded-lg border cursor-pointer hover:opacity-80"
+                        :class="isDark ? 'border-neutral-700' : 'border-neutral-300'">Manage billing</button>
+            </form>
+        </div>
+    {% endif %}
+
+    <a href="/settings" class="hover:opacity-80" :class="isDark ? 'text-neutral-400' : 'text-neutral-600'">← Back to settings</a>
+</div>
 {% endblock %}

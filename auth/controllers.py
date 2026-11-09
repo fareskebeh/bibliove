@@ -267,21 +267,6 @@ def auth_routes_init(app):
         if not user:
             return redirect('/')
         
-        return render_template('settings.jinja', 
-            is_authenticated=True, 
-        )
-    
-    @app.route('/upgrade-plan', methods=['GET'])
-    @limiter.limit('100/minute')
-    def upgrade_plan_get():
-        email = session.get('email')
-        if not email:
-            return redirect('/')
-        
-        user = User.query.filter_by(email=email).first()
-        if not user:
-            return redirect('/')
-        
-        return render_template('upgrade-plan.jinja', 
-            is_authenticated=True, 
+        return render_template('settings.jinja',
+            is_authenticated=True,
         )
