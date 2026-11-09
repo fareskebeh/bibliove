@@ -1,6 +1,6 @@
 from keymanager.models import ApiKey
 from hashlib import sha256
-from flask import request, jsonify, make_response
+from flask import request, jsonify, make_response, render_template, session
 from uuid import uuid4
 from .tasks import extract_text
 from .redis import ocr_queue
@@ -61,3 +61,7 @@ def core_routes_init(app):
                 return {"status": "processing"}
         except NoSuchJobError:
             return {"status": "not_found"}, 404
+
+    @app.route('/docs', methods=['GET'])
+    def api_docs():
+        return render_template('docs.jinja', is_authenticated=bool(session.get('email')))
