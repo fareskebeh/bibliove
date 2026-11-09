@@ -35,8 +35,11 @@ def auth_routes_init(app):
         return redirect("/home")
     
     @app.route('/register', methods=['GET', 'POST'])
-    @limiter.limit('5/hour')
+    #change before I quit
+    @limiter.limit('10000/hour')
     def register():
+        #  get the plan they chose ln #42
+        chosen_plan = request.args.get('plan')
         is_authenticated = True if session.get("email") else False
         if is_authenticated:
             return redirect("/home")
@@ -78,6 +81,8 @@ def auth_routes_init(app):
                             })
                         session['pending_verification_email'] = email
                         session['pending_verification_code'] = code
+                        session['chosen_plan_id'] = chosen_plan
+
                         return redirect("/verify")
                 else:
                     flash("Invalid email format", "error")
@@ -99,14 +104,19 @@ def auth_routes_init(app):
             code_db = str(session.get("pending_verification_code"))
 
             if code_user == code_db:
+                # THis is in case the user inputs the correct code
                 user = User.query.filter_by(email=email).first()
                 if user:
                     user.is_verified = True
                     db.session.commit()
-                    session.pop('pending_verification_email', None)
                     session.pop('pending_verification_code', None)
-                    flash("Email verified! Please log in.", "success")
-                    return redirect("/login")
+                    chosen_plan = session.get('chosen_plan_id')
+                    if not chosen_plan or chosen_plan =='Free':
+                        flash("Email verified! Please log in.", "success")
+                        session.pop('pending_verification_email', None)
+                        return redirect("/login")
+                    else:
+                        return redirect('/dummy-checkout')
                 else:
                     flash("User not found", "error")
                     return redirect("/register")
@@ -134,7 +144,12 @@ def auth_routes_init(app):
             
             if not user.is_verified:
                 code = generate_code()
-                print(f"CODE HAS BEEN SENT {email} \nDEBUG: {code}")
+                r= resend.Emails.send( {
+                                "from" : "onboarding@resend.dev",
+                                "to" : email,
+                                "subject" : "Your Bibliove verification code",
+                                "html" : f"<p>Copy this code and paste it in the verification input field</p> <h2>{code}</h2>"
+                            })
                 session['pending_verification_email'] = email
                 session['pending_verification_code'] = code
                 flash("Please verify your email first", "warning")
@@ -172,9 +187,9 @@ def auth_routes_init(app):
     @limiter.limit('100/minute')
     def pricing():
         is_authenticated = True if session.get("email") else False
-
+        user = User.query.filter(User.email==session.get("email")).first()
         plans = Plan.query.all()
-        return render_template("pricing.jinja", plans=plans, is_authenticated=is_authenticated)
+        return render_template("pricing.jinja", plans=plans, is_authenticated=is_authenticated, user=user)
     
     @app.route('/password-reset', methods=['GET', 'POST'])
     @limiter.limit('5/hour')
@@ -253,5 +268,20 @@ def auth_routes_init(app):
             return redirect('/')
         
         return render_template('settings.jinja', 
+            is_authenticated=True, 
+        )
+    
+    @app.route('/upgrade-plan', methods=['GET'])
+    @limiter.limit('100/minute')
+    def upgrade_plan_get():
+        email = session.get('email')
+        if not email:
+            return redirect('/')
+        
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            return redirect('/')
+        
+        return render_template('upgrade-plan.jinja', 
             is_authenticated=True, 
         )

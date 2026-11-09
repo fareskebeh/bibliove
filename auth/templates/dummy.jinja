@@ -1,0 +1,11 @@
+{% extends 'base.jinja' %}
+
+{% block content %}
+    <form class='h-dvh w-full flex flex-col justify-center items-center' action='/dummy-checkout' method='POST'>
+        <p>Let's pretend you checked out</p>
+        <button class='bg-orange-600 p-2 cursor-pointer'>Checkout</button>
+
+        <p class='mt-8'>Let's pretend you didn't</p>
+        <button class='bg-neutral-800 p-2 cursor-pointer'>go back</button>
+    </form>
+{% endblock %}

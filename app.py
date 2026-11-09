@@ -10,6 +10,7 @@ from auth.models import User
 from keymanager.models import ApiKey
 from payments.models import Plan
 from extensions import limiter
+from payments.controllers import payment_routes_init
 
 load_dotenv()
 
@@ -18,6 +19,9 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DB_CTX_URL")
 app.config["REMEMBER_COOKIE_SAMESITE"] = os.getenv("REMEMBER_COOKIE_SAMESITE")
 app.config["SESSION_COOKIE_SAMESITE"] = os.getenv("SESSION_COOKIE_SAMESITE")
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
+app.config['STRIPE_SECRET_KEY'] = os.getenv('STRIPE_SECRET_KEY')
+app.config['STRIPE_PUBLISHABLE_KEY'] = os.getenv('STRIPE_PUBLISHABLE_KEY')
+
 
 db.init_app(app)
 
@@ -28,6 +32,7 @@ limiter.init_app(app)
 core_routes_init(app)
 auth_routes_init(app)
 key_routes_init(app)
+payment_routes_init(app)
 
 @app.errorhandler(429)
 def ratelimit_handler():
