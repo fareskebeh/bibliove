@@ -1,49 +1,58 @@
 {% extends 'base.jinja' %}
 
 {% block content %}
-<div class="pt-24 pb-16 px-4 sm:px-8 max-w-4xl mx-auto flex flex-col gap-10">
-    <div class="flex flex-col gap-3">
-        <p class="text-3xl sm:text-4xl md:text-5xl font-extrabold transition-colors duration-150"
-           :class="isDark ? 'text-white' : 'text-black'">API Documentation</p>
-        <p class="text-lg transition-colors duration-150" :class="isDark ? 'text-neutral-400' : 'text-neutral-600'">
-            Bibliove turns PDFs into text over a small HTTP API. Upload a document, receive a job ID, then check the job until its text is ready.
-        </p>
-    </div>
+<div class="pt-24 pb-16 px-4 sm:px-8 max-w-6xl mx-auto grid gap-10 lg:grid-cols-[200px_minmax(0,1fr)] items-start">
+    <aside class="lg:sticky lg:top-28 p-3 rounded-xl border shadow-sm transition-colors duration-150"
+           :class="isDark ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-neutral-300'">
+        <p class="px-3 pb-2 text-xs uppercase tracking-widest" :class="isDark ? 'text-neutral-500' : 'text-neutral-500'">On this page</p>
+        <nav class="grid grid-cols-2 lg:grid-cols-1 gap-1">
+            <a href="#base-url" data-doc-link class="px-3 py-2 rounded-lg text-sm transition duration-150 hover:opacity-80"
+               :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">Base URL</a>
+            <a href="#authentication" data-doc-link class="px-3 py-2 rounded-lg text-sm transition duration-150 hover:opacity-80"
+               :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">Authentication</a>
+            <a href="#quickstart" data-doc-link class="px-3 py-2 rounded-lg text-sm transition duration-150 hover:opacity-80"
+               :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">Quickstart</a>
+            <a href="#extract" data-doc-link class="px-3 py-2 rounded-lg text-sm transition duration-150 hover:opacity-80"
+               :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">Upload a PDF</a>
+            <a href="#status" data-doc-link class="px-3 py-2 rounded-lg text-sm transition duration-150 hover:opacity-80"
+               :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">Check a job</a>
+            <a href="#python" data-doc-link class="px-3 py-2 rounded-lg text-sm transition duration-150 hover:opacity-80"
+               :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">Python example</a>
+            <a href="#plans" data-doc-link class="px-3 py-2 rounded-lg text-sm transition duration-150 hover:opacity-80"
+               :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">Plans and limits</a>
+            <a href="#errors" data-doc-link class="px-3 py-2 rounded-lg text-sm transition duration-150 hover:opacity-80"
+               :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">Errors</a>
+        </nav>
+    </aside>
 
-    <nav class="flex flex-wrap gap-3 text-sm">
-        <a href="#authentication" class="px-3 py-1 rounded-full border hover:opacity-80 transition duration-150"
-           :class="isDark ? 'border-neutral-700 text-neutral-300' : 'border-neutral-300 text-neutral-700'">Authentication</a>
-        <a href="#quickstart" class="px-3 py-1 rounded-full border hover:opacity-80 transition duration-150"
-           :class="isDark ? 'border-neutral-700 text-neutral-300' : 'border-neutral-300 text-neutral-700'">Quickstart</a>
-        <a href="#extract" class="px-3 py-1 rounded-full border hover:opacity-80 transition duration-150"
-           :class="isDark ? 'border-neutral-700 text-neutral-300' : 'border-neutral-300 text-neutral-700'">Upload a PDF</a>
-        <a href="#status" class="px-3 py-1 rounded-full border hover:opacity-80 transition duration-150"
-           :class="isDark ? 'border-neutral-700 text-neutral-300' : 'border-neutral-300 text-neutral-700'">Check a job</a>
-        <a href="#plans" class="px-3 py-1 rounded-full border hover:opacity-80 transition duration-150"
-           :class="isDark ? 'border-neutral-700 text-neutral-300' : 'border-neutral-300 text-neutral-700'">Plans and limits</a>
-        <a href="#errors" class="px-3 py-1 rounded-full border hover:opacity-80 transition duration-150"
-           :class="isDark ? 'border-neutral-700 text-neutral-300' : 'border-neutral-300 text-neutral-700'">Errors</a>
-    </nav>
+    <div class="flex flex-col gap-10 min-w-0">
+        <div class="flex flex-col gap-3">
+            <p class="text-3xl sm:text-4xl md:text-5xl font-extrabold transition-colors duration-150"
+               :class="isDark ? 'text-white' : 'text-black'">API Documentation</p>
+            <p class="text-lg transition-colors duration-150" :class="isDark ? 'text-neutral-400' : 'text-neutral-600'">
+                Bibliove turns PDFs into text over a small HTTP API. Upload a document, receive a job ID, then check the job until its text is ready.
+            </p>
+        </div>
 
-    <section id="base-url" class="flex flex-col gap-3">
-        <p class="text-2xl font-bold" :class="isDark ? 'text-white' : 'text-black'">Base URL</p>
-        <p :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">
-            All endpoints live under this server's address. Examples on this page use the environment variable <code class="font-mono text-sm">BIBLIOVE_URL</code>, set to <code class="font-mono text-sm">{{ request.host_url.rstrip('/')|e }}</code>.
-        </p>
-    </section>
+        <section id="base-url" class="flex flex-col gap-3">
+            <p class="text-2xl font-bold" :class="isDark ? 'text-white' : 'text-black'">Base URL</p>
+            <p :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">
+                All endpoints live under this server's address. Examples on this page use the environment variable <code class="font-mono text-sm">BIBLIOVE_URL</code>, set to <code class="font-mono text-sm">{{ request.host_url.rstrip('/')|e }}</code>.
+            </p>
+        </section>
 
-    <section id="authentication" class="flex flex-col gap-3">
-        <p class="text-2xl font-bold" :class="isDark ? 'text-white' : 'text-black'">Authentication</p>
-        <p :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">
-            Send your API key as a Bearer token in the <code class="font-mono text-sm">Authorization</code> header. Create keys from your Dashboard. A key is shown once when it's created, so store it somewhere safe. Free accounts can hold one key.
-        </p>
-        <pre class="p-4 rounded-xl bg-neutral-900 text-neutral-100 text-sm overflow-x-auto border border-neutral-800"><code>{% raw %}Authorization: Bearer &lt;your-api-key&gt;{% endraw %}</code></pre>
-    </section>
+        <section id="authentication" class="flex flex-col gap-3">
+            <p class="text-2xl font-bold" :class="isDark ? 'text-white' : 'text-black'">Authentication</p>
+            <p :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">
+                Send your API key as a Bearer token in the <code class="font-mono text-sm">Authorization</code> header. Create keys from your Dashboard. A key is shown once when it's created, so store it somewhere safe. Free accounts can hold one key.
+            </p>
+            <pre class="docs-code language-bash p-4 rounded-xl bg-neutral-900 text-neutral-100 text-sm overflow-x-auto border border-neutral-800"><code class="language-bash">{% raw %}Authorization: Bearer &lt;your-api-key&gt;{% endraw %}</code></pre>
+        </section>
 
-    <section id="quickstart" class="flex flex-col gap-4">
-        <p class="text-2xl font-bold" :class="isDark ? 'text-white' : 'text-black'">Quickstart</p>
-        <p :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">Upload a PDF, then check the job until it finishes.</p>
-        <pre class="p-4 rounded-xl bg-neutral-900 text-neutral-100 text-sm overflow-x-auto border border-neutral-800"><code>{% raw %}export BIBLIOVE_URL=https://your-server
+        <section id="quickstart" class="flex flex-col gap-4">
+            <p class="text-2xl font-bold" :class="isDark ? 'text-white' : 'text-black'">Quickstart</p>
+            <p :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">Upload a PDF, then check the job until it finishes.</p>
+            <pre class="docs-code language-bash p-4 rounded-xl bg-neutral-900 text-neutral-100 text-sm overflow-x-auto border border-neutral-800"><code class="language-bash">{% raw %}export BIBLIOVE_URL=https://your-server
 export BIBLIOVE_KEY=your-api-key
 
 curl -X POST "$BIBLIOVE_URL/extract" \
@@ -51,91 +60,91 @@ curl -X POST "$BIBLIOVE_URL/extract" \
   -F "pdf=@report.pdf"
 
 curl "$BIBLIOVE_URL/status/&lt;job_id&gt;"{% endraw %}</code></pre>
-    </section>
+        </section>
 
-    <section id="extract" class="flex flex-col gap-5">
-        <div class="flex flex-col gap-2">
-            <p class="text-xs uppercase tracking-widest font-bold text-orange-600">POST</p>
-            <p class="text-2xl font-bold font-mono" :class="isDark ? 'text-white' : 'text-black'">/extract</p>
-            <p :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">
-                Queues a PDF for text extraction. Returns immediately with a job ID. The work happens in the background.
-            </p>
-        </div>
+        <section id="extract" class="flex flex-col gap-5">
+            <div class="flex flex-col gap-2">
+                <p class="text-xs uppercase tracking-widest font-bold text-orange-600">POST</p>
+                <p class="text-2xl font-bold font-mono" :class="isDark ? 'text-white' : 'text-black'">/extract</p>
+                <p :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">
+                    Queues a PDF for text extraction. Returns immediately with a job ID. The work happens in the background.
+                </p>
+            </div>
 
-        <div class="flex flex-col gap-2">
-            <p class="font-bold" :class="isDark ? 'text-white' : 'text-black'">Request</p>
-            <ul class="flex flex-col gap-2 text-sm list-disc pl-5" :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">
-                <li><span class="font-mono">Content-Type: multipart/form-data</span></li>
-                <li><span class="font-mono">Authorization</span>: Bearer key, required</li>
-                <li><span class="font-mono">pdf</span>: the PDF file, required</li>
-            </ul>
-        </div>
+            <div class="flex flex-col gap-2">
+                <p class="font-bold" :class="isDark ? 'text-white' : 'text-black'">Request</p>
+                <ul class="flex flex-col gap-2 text-sm list-disc pl-5" :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">
+                    <li><span class="font-mono">Content-Type: multipart/form-data</span></li>
+                    <li><span class="font-mono">Authorization</span>: Bearer key, required</li>
+                    <li><span class="font-mono">pdf</span>: the PDF file, required</li>
+                </ul>
+            </div>
 
-        <div class="flex flex-col gap-2">
-            <p class="font-bold" :class="isDark ? 'text-white' : 'text-black'">Response · 200 OK</p>
-            <pre class="p-4 rounded-xl bg-neutral-900 text-neutral-100 text-sm overflow-x-auto border border-neutral-800"><code>{% raw %}{
+            <div class="flex flex-col gap-2">
+                <p class="font-bold" :class="isDark ? 'text-white' : 'text-black'">Response · 200 OK</p>
+                <pre class="docs-code language-json p-4 rounded-xl bg-neutral-900 text-neutral-100 text-sm overflow-x-auto border border-neutral-800"><code class="language-json">{% raw %}{
   "job_id": "3f9c2a1e5b7d4c6f8a0b1c2d3e4f5a6b",
   "status": "queued",
   "message": "Processing started"
 }{% endraw %}</code></pre>
-        </div>
-    </section>
+            </div>
+        </section>
 
-    <section id="status" class="flex flex-col gap-5">
-        <div class="flex flex-col gap-2">
-            <p class="text-xs uppercase tracking-widest font-bold text-green-600">GET</p>
-            <p class="text-2xl font-bold font-mono" :class="isDark ? 'text-white' : 'text-black'">/status/{job_id}</p>
-            <p :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">
-                Returns the job's state. Poll this endpoint until it returns a <span class="font-mono">result</span>. A reasonable interval is every one to two seconds. No authentication is needed here, because job IDs are random and unguessable.
-            </p>
-        </div>
+        <section id="status" class="flex flex-col gap-5">
+            <div class="flex flex-col gap-2">
+                <p class="text-xs uppercase tracking-widest font-bold text-green-600">GET</p>
+                <p class="text-2xl font-bold font-mono" :class="isDark ? 'text-white' : 'text-black'">/status/{job_id}</p>
+                <p :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">
+                    Returns the job's state. Poll this endpoint until it returns a <span class="font-mono">result</span>. A reasonable interval is every one to two seconds. No authentication is needed here, because job IDs are random and unguessable.
+                </p>
+            </div>
 
-        <div class="flex flex-col gap-3">
-            <p class="font-bold" :class="isDark ? 'text-white' : 'text-black'">Responses · 200 OK</p>
-            <pre class="p-4 rounded-xl bg-neutral-900 text-neutral-100 text-sm overflow-x-auto border border-neutral-800"><code>{% raw %}{ "status": "queued" }
+            <div class="flex flex-col gap-3">
+                <p class="font-bold" :class="isDark ? 'text-white' : 'text-black'">Responses · 200 OK</p>
+                <pre class="docs-code language-json p-4 rounded-xl bg-neutral-900 text-neutral-100 text-sm overflow-x-auto border border-neutral-800"><code class="language-json">{% raw %}{ "status": "queued" }
 { "status": "processing" }
 { "result": { ... } }{% endraw %}</code></pre>
-            <p class="text-sm" :class="isDark ? 'text-neutral-400' : 'text-neutral-600'">
-                <span class="font-mono">queued</span> means the job is waiting for a worker. <span class="font-mono">processing</span> means a worker is reading the document.
-            </p>
-        </div>
-
-        <div class="flex flex-col gap-3">
-            <p class="font-bold" :class="isDark ? 'text-white' : 'text-black'">The result object</p>
-            <div class="overflow-x-auto rounded-xl border" :class="isDark ? 'border-neutral-800' : 'border-neutral-300'">
-                <table class="w-full text-sm text-left">
-                    <thead :class="isDark ? 'bg-neutral-900 text-neutral-300' : 'bg-neutral-100 text-neutral-700'">
-                        <tr>
-                            <th class="p-3 font-semibold">Field</th>
-                            <th class="p-3 font-semibold">Type</th>
-                            <th class="p-3 font-semibold">Meaning</th>
-                        </tr>
-                    </thead>
-                    <tbody :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">
-                        <tr class="border-t" :class="isDark ? 'border-neutral-800' : 'border-neutral-200'">
-                            <td class="p-3 font-mono">text</td>
-                            <td class="p-3">array of strings</td>
-                            <td class="p-3">One entry per processed page, in document order.</td>
-                        </tr>
-                        <tr class="border-t" :class="isDark ? 'border-neutral-800' : 'border-neutral-200'">
-                            <td class="p-3 font-mono">pages_processed</td>
-                            <td class="p-3">integer</td>
-                            <td class="p-3">Number of pages that produced text.</td>
-                        </tr>
-                        <tr class="border-t" :class="isDark ? 'border-neutral-800' : 'border-neutral-200'">
-                            <td class="p-3 font-mono">status</td>
-                            <td class="p-3">string</td>
-                            <td class="p-3"><span class="font-mono">complete</span>, <span class="font-mono">partial</span> (free allowance ran out mid-document), or <span class="font-mono">error</span>.</td>
-                        </tr>
-                        <tr class="border-t" :class="isDark ? 'border-neutral-800' : 'border-neutral-200'">
-                            <td class="p-3 font-mono">code</td>
-                            <td class="p-3">integer</td>
-                            <td class="p-3">Outcome code: 200 success, 429 allowance used up, 500 processing failed.</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <p class="text-sm" :class="isDark ? 'text-neutral-400' : 'text-neutral-600'">
+                    <span class="font-mono">queued</span> means the job is waiting for a worker. <span class="font-mono">processing</span> means a worker is reading the document.
+                </p>
             </div>
-            <pre class="p-4 rounded-xl bg-neutral-900 text-neutral-100 text-sm overflow-x-auto border border-neutral-800"><code>{% raw %}{
+
+            <div class="flex flex-col gap-3">
+                <p class="font-bold" :class="isDark ? 'text-white' : 'text-black'">The result object</p>
+                <div class="overflow-x-auto rounded-xl border" :class="isDark ? 'border-neutral-800' : 'border-neutral-300'">
+                    <table class="w-full text-sm text-left">
+                        <thead :class="isDark ? 'bg-neutral-900 text-neutral-300' : 'bg-neutral-100 text-neutral-700'">
+                            <tr>
+                                <th class="p-3 font-semibold">Field</th>
+                                <th class="p-3 font-semibold">Type</th>
+                                <th class="p-3 font-semibold">Meaning</th>
+                            </tr>
+                        </thead>
+                        <tbody :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">
+                            <tr class="border-t" :class="isDark ? 'border-neutral-800' : 'border-neutral-200'">
+                                <td class="p-3 font-mono">text</td>
+                                <td class="p-3">array of strings</td>
+                                <td class="p-3">One entry per processed page, in document order.</td>
+                            </tr>
+                            <tr class="border-t" :class="isDark ? 'border-neutral-800' : 'border-neutral-200'">
+                                <td class="p-3 font-mono">pages_processed</td>
+                                <td class="p-3">integer</td>
+                                <td class="p-3">Number of pages that produced text.</td>
+                            </tr>
+                            <tr class="border-t" :class="isDark ? 'border-neutral-800' : 'border-neutral-200'">
+                                <td class="p-3 font-mono">status</td>
+                                <td class="p-3">string</td>
+                                <td class="p-3"><span class="font-mono">complete</span>, <span class="font-mono">partial</span> (free allowance ran out mid-document), or <span class="font-mono">error</span>.</td>
+                            </tr>
+                            <tr class="border-t" :class="isDark ? 'border-neutral-800' : 'border-neutral-200'">
+                                <td class="p-3 font-mono">code</td>
+                                <td class="p-3">integer</td>
+                                <td class="p-3">Outcome code: 200 success, 429 allowance used up, 500 processing failed.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <pre class="docs-code language-json p-4 rounded-xl bg-neutral-900 text-neutral-100 text-sm overflow-x-auto border border-neutral-800"><code class="language-json">{% raw %}{
   "result": {
     "text": ["Page one text...", "Page two text..."],
     "pages_processed": 2,
@@ -143,15 +152,15 @@ curl "$BIBLIOVE_URL/status/&lt;job_id&gt;"{% endraw %}</code></pre>
     "code": 200
   }
 }{% endraw %}</code></pre>
-            <p class="text-sm" :class="isDark ? 'text-neutral-400' : 'text-neutral-600'">
-                Pages without an embedded text layer are read with OCR. OCR currently reads English only.
-            </p>
-        </div>
-    </section>
+                <p class="text-sm" :class="isDark ? 'text-neutral-400' : 'text-neutral-600'">
+                    Pages without an embedded text layer are read with OCR. OCR currently reads English only.
+                </p>
+            </div>
+        </section>
 
-    <section id="python" class="flex flex-col gap-3">
-        <p class="text-2xl font-bold" :class="isDark ? 'text-white' : 'text-black'">Python example</p>
-        <pre class="p-4 rounded-xl bg-neutral-900 text-neutral-100 text-sm overflow-x-auto border border-neutral-800"><code>{% raw %}import os
+        <section id="python" class="flex flex-col gap-3">
+            <p class="text-2xl font-bold" :class="isDark ? 'text-white' : 'text-black'">Python example</p>
+            <pre class="docs-code language-python p-4 rounded-xl bg-neutral-900 text-neutral-100 text-sm overflow-x-auto border border-neutral-800"><code class="language-python">{% raw %}import os
 import time
 import requests
 
@@ -173,53 +182,99 @@ while True:
     time.sleep(2)
 
 pages = body["result"]["text"]{% endraw %}</code></pre>
-    </section>
+        </section>
 
-    <section id="plans" class="flex flex-col gap-3">
-        <p class="text-2xl font-bold" :class="isDark ? 'text-white' : 'text-black'">Plans and limits</p>
-        <ul class="flex flex-col gap-3 list-disc pl-5" :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">
-            <li><span class="font-semibold">Free:</span> one API key and 50 pages in total for the account. The allowance is lifetime and does not reset. Once a document goes past what's left, only the remaining pages are processed and the result's status is <span class="font-mono">partial</span>. After that, uploads return a result with status <span class="font-mono">error</span> and code <span class="font-mono">429</span>.</li>
-            <li><span class="font-semibold">Paid plans:</span> the full document is processed. See <a href="/pricing" class="text-orange-600 hover:opacity-80">Pricing</a> for plan details.</li>
-            <li><span class="font-semibold">Request rate:</span> each IP address may make 50 requests per hour and 200 per day across all endpoints. Going over returns HTTP 429.</li>
-        </ul>
-    </section>
+        <section id="plans" class="flex flex-col gap-3">
+            <p class="text-2xl font-bold" :class="isDark ? 'text-white' : 'text-black'">Plans and limits</p>
+            <ul class="flex flex-col gap-3 list-disc pl-5" :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">
+                <li><span class="font-semibold">Free:</span> one API key and 50 pages in total for the account. The allowance is lifetime and does not reset. Once a document goes past what's left, only the remaining pages are processed and the result's status is <span class="font-mono">partial</span>. After that, uploads return a result with status <span class="font-mono">error</span> and code <span class="font-mono">429</span>.</li>
+                <li><span class="font-semibold">Paid plans:</span> the full document is processed. See <a href="/pricing" class="text-orange-600 hover:opacity-80">Pricing</a> for plan details.</li>
+                <li><span class="font-semibold">Request rate:</span> each IP address may make 50 requests per hour and 200 per day across all endpoints. Going over returns HTTP 429.</li>
+            </ul>
+        </section>
 
-    <section id="errors" class="flex flex-col gap-3">
-        <p class="text-2xl font-bold" :class="isDark ? 'text-white' : 'text-black'">Errors</p>
-        <div class="overflow-x-auto rounded-xl border" :class="isDark ? 'border-neutral-800' : 'border-neutral-300'">
-            <table class="w-full text-sm text-left">
-                <thead :class="isDark ? 'bg-neutral-900 text-neutral-300' : 'bg-neutral-100 text-neutral-700'">
-                    <tr>
-                        <th class="p-3 font-semibold">HTTP</th>
-                        <th class="p-3 font-semibold">When</th>
-                    </tr>
-                </thead>
-                <tbody :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">
-                    <tr class="border-t" :class="isDark ? 'border-neutral-800' : 'border-neutral-200'">
-                        <td class="p-3 font-mono">400</td>
-                        <td class="p-3">No <span class="font-mono">pdf</span> file was attached to <span class="font-mono">/extract</span>.</td>
-                    </tr>
-                    <tr class="border-t" :class="isDark ? 'border-neutral-800' : 'border-neutral-200'">
-                        <td class="p-3 font-mono">401</td>
-                        <td class="p-3">The Authorization header is missing, not a Bearer token, or the key is unknown or has been deleted.</td>
-                    </tr>
-                    <tr class="border-t" :class="isDark ? 'border-neutral-800' : 'border-neutral-200'">
-                        <td class="p-3 font-mono">404</td>
-                        <td class="p-3"><span class="font-mono">/status</span> doesn't recognise the job ID.</td>
-                    </tr>
-                    <tr class="border-t" :class="isDark ? 'border-neutral-800' : 'border-neutral-200'">
-                        <td class="p-3 font-mono">429</td>
-                        <td class="p-3">Too many requests from your IP address. Wait and retry. A 429 on a job result means the Free allowance is used up.</td>
-                    </tr>
-                    <tr class="border-t" :class="isDark ? 'border-neutral-800' : 'border-neutral-200'">
-                        <td class="p-3 font-mono">500</td>
-                        <td class="p-3">The job failed. Upload the document again.</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </section>
+        <section id="errors" class="flex flex-col gap-3">
+            <p class="text-2xl font-bold" :class="isDark ? 'text-white' : 'text-black'">Errors</p>
+            <div class="overflow-x-auto rounded-xl border" :class="isDark ? 'border-neutral-800' : 'border-neutral-300'">
+                <table class="w-full text-sm text-left">
+                    <thead :class="isDark ? 'bg-neutral-900 text-neutral-300' : 'bg-neutral-100 text-neutral-700'">
+                        <tr>
+                            <th class="p-3 font-semibold">HTTP</th>
+                            <th class="p-3 font-semibold">When</th>
+                        </tr>
+                    </thead>
+                    <tbody :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">
+                        <tr class="border-t" :class="isDark ? 'border-neutral-800' : 'border-neutral-200'">
+                            <td class="p-3 font-mono">400</td>
+                            <td class="p-3">No <span class="font-mono">pdf</span> file was attached to <span class="font-mono">/extract</span>.</td>
+                        </tr>
+                        <tr class="border-t" :class="isDark ? 'border-neutral-800' : 'border-neutral-200'">
+                            <td class="p-3 font-mono">401</td>
+                            <td class="p-3">The Authorization header is missing, not a Bearer token, or the key is unknown or has been deleted.</td>
+                        </tr>
+                        <tr class="border-t" :class="isDark ? 'border-neutral-800' : 'border-neutral-200'">
+                            <td class="p-3 font-mono">404</td>
+                            <td class="p-3"><span class="font-mono">/status</span> doesn't recognise the job ID.</td>
+                        </tr>
+                        <tr class="border-t" :class="isDark ? 'border-neutral-800' : 'border-neutral-200'">
+                            <td class="p-3 font-mono">429</td>
+                            <td class="p-3">Too many requests from your IP address. Wait and retry. A 429 on a job result means the Free allowance is used up.</td>
+                        </tr>
+                        <tr class="border-t" :class="isDark ? 'border-neutral-800' : 'border-neutral-200'">
+                            <td class="p-3 font-mono">500</td>
+                            <td class="p-3">The job failed. Upload the document again.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
 
-    <a href="/" class="hover:opacity-80 transition duration-150" :class="isDark ? 'text-neutral-400' : 'text-neutral-600'">← Back to home</a>
+        <a href="/" class="hover:opacity-80 transition duration-150" :class="isDark ? 'text-neutral-400' : 'text-neutral-600'">← Back to home</a>
+    </div>
 </div>
+
+<style>
+    .docs-code .token.comment { color: #6b7280; }
+    .docs-code .token.string { color: #86efac; }
+    .docs-code .token.keyword, .docs-code .token.important { color: #fb923c; }
+    .docs-code .token.function { color: #93c5fd; }
+    .docs-code .token.number, .docs-code .token.boolean, .docs-code .token.constant { color: #fcd34d; }
+    .docs-code .token.property, .docs-code .token.key { color: #7dd3fc; }
+    .docs-code .token.builtin, .docs-code .token.class-name { color: #fdba74; }
+    .docs-code .token.parameter, .docs-code .token.flag { color: #c4b5fd; }
+    .docs-code .token.operator, .docs-code .token.punctuation { color: #d4d4d8; }
+    .docs-code .token.variable { color: #f9a8d4; }
+    .docs-code .token.attr-name { color: #7dd3fc; }
+    .docs-link-active { color: #ea580c; background: rgba(234, 88, 12, 0.1); }
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+<script>
+    (function () {
+        const links = Array.from(document.querySelectorAll('[data-doc-link]'));
+        const sections = links
+            .map((link) => document.getElementById(link.getAttribute('href').slice(1)))
+            .filter(Boolean);
+
+        function setActive(id) {
+            links.forEach((link) => {
+                link.classList.toggle('docs-link-active', link.getAttribute('href') === '#' + id);
+            });
+        }
+
+        if ('IntersectionObserver' in window && sections.length) {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        setActive(entry.target.id);
+                    }
+                });
+            }, { rootMargin: '-30% 0px -60% 0px' });
+            sections.forEach((section) => observer.observe(section));
+        }
+    })();
+</script>
 {% endblock %}
