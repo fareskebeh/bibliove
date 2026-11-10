@@ -1,26 +1,34 @@
 {% extends 'base.jinja' %}
 
 {% block content %}
-<div class="pt-24 pb-16 px-4 sm:px-8 max-w-6xl mx-auto grid gap-10 lg:grid-cols-[200px_minmax(0,1fr)] items-start">
-    <aside class="lg:sticky lg:top-28 p-3 rounded-xl border shadow-sm transition-colors duration-150"
+<div class="pt-[8rem] lg:pt-24 pb-16 px-4 sm:px-8 max-w-6xl mx-auto grid gap-10 lg:grid-cols-[200px_minmax(0,1fr)] items-start">
+    <aside class="fixed inset-x-0 top-[61px] z-40 border-b shadow-md lg:sticky lg:top-28 lg:inset-x-auto lg:z-auto lg:p-3 lg:rounded-xl lg:border lg:shadow-sm transition-colors duration-150"
            :class="isDark ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-neutral-300'">
-        <p class="px-3 pb-2 text-xs uppercase tracking-widest" :class="isDark ? 'text-neutral-500' : 'text-neutral-500'">On this page</p>
-        <nav class="grid grid-cols-2 lg:grid-cols-1 gap-1">
-            <a href="#base-url" data-doc-link class="px-3 py-2 rounded-lg text-sm transition duration-150 hover:opacity-80"
+        <div class="flex items-center justify-between gap-3 px-4 py-3 lg:hidden">
+            <p id="doc-current-label" class="text-sm font-semibold truncate" :class="isDark ? 'text-white' : 'text-black'">Base URL</p>
+            <button type="button" id="doc-menu-toggle" aria-expanded="false" aria-controls="doc-menu" aria-label="Show sections"
+                    class="p-2 rounded-lg border cursor-pointer hover:opacity-80 transition duration-150"
+                    :class="isDark ? 'border-neutral-700 text-neutral-300' : 'border-neutral-300 text-neutral-700'">
+                <i id="doc-menu-icon" class="fas fa-chevron-down w-4 text-center"></i>
+            </button>
+        </div>
+        <p class="hidden lg:block px-3 pb-2 text-xs uppercase tracking-widest" :class="isDark ? 'text-neutral-500' : 'text-neutral-500'">On this page</p>
+        <nav id="doc-menu" class="hidden lg:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-1 px-4 pb-3 max-h-[60vh] overflow-y-auto lg:p-0 lg:max-h-none">
+            <a href="#base-url" data-doc-link class="block px-3 py-2 rounded-lg text-sm transition duration-150 hover:opacity-80"
                :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">Base URL</a>
-            <a href="#authentication" data-doc-link class="px-3 py-2 rounded-lg text-sm transition duration-150 hover:opacity-80"
+            <a href="#authentication" data-doc-link class="block px-3 py-2 rounded-lg text-sm transition duration-150 hover:opacity-80"
                :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">Authentication</a>
-            <a href="#quickstart" data-doc-link class="px-3 py-2 rounded-lg text-sm transition duration-150 hover:opacity-80"
+            <a href="#quickstart" data-doc-link class="block px-3 py-2 rounded-lg text-sm transition duration-150 hover:opacity-80"
                :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">Quickstart</a>
-            <a href="#extract" data-doc-link class="px-3 py-2 rounded-lg text-sm transition duration-150 hover:opacity-80"
+            <a href="#extract" data-doc-link class="block px-3 py-2 rounded-lg text-sm transition duration-150 hover:opacity-80"
                :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">Upload a PDF</a>
-            <a href="#status" data-doc-link class="px-3 py-2 rounded-lg text-sm transition duration-150 hover:opacity-80"
+            <a href="#status" data-doc-link class="block px-3 py-2 rounded-lg text-sm transition duration-150 hover:opacity-80"
                :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">Check a job</a>
-            <a href="#python" data-doc-link class="px-3 py-2 rounded-lg text-sm transition duration-150 hover:opacity-80"
+            <a href="#python" data-doc-link class="block px-3 py-2 rounded-lg text-sm transition duration-150 hover:opacity-80"
                :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">Python example</a>
-            <a href="#plans" data-doc-link class="px-3 py-2 rounded-lg text-sm transition duration-150 hover:opacity-80"
+            <a href="#plans" data-doc-link class="block px-3 py-2 rounded-lg text-sm transition duration-150 hover:opacity-80"
                :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">Plans and limits</a>
-            <a href="#errors" data-doc-link class="px-3 py-2 rounded-lg text-sm transition duration-150 hover:opacity-80"
+            <a href="#errors" data-doc-link class="block px-3 py-2 rounded-lg text-sm transition duration-150 hover:opacity-80"
                :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">Errors</a>
         </nav>
     </aside>
@@ -246,7 +254,8 @@ pages = body["result"]["text"]{% endraw %}</code></pre>
     .docs-code .token.variable { color: #f9a8d4; }
     .docs-code .token.attr-name { color: #7dd3fc; }
     .docs-link-active { color: #ea580c; background: rgba(234, 88, 12, 0.1); }
-    section[id] { scroll-margin-top: 7rem; }
+    section[id] { scroll-margin-top: 10rem; }
+    @media (min-width: 1024px) { section[id] { scroll-margin-top: 7rem; } }
 </style>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
@@ -256,14 +265,30 @@ pages = body["result"]["text"]{% endraw %}</code></pre>
 <script>
     (function () {
         const links = Array.from(document.querySelectorAll('[data-doc-link]'));
+        const menu = document.getElementById('doc-menu');
+        const menuToggle = document.getElementById('doc-menu-toggle');
+        const menuIcon = document.getElementById('doc-menu-icon');
+        const currentLabel = document.getElementById('doc-current-label');
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         const sections = links
             .map((link) => document.getElementById(link.getAttribute('href').slice(1)))
             .filter(Boolean);
 
         function setActive(id) {
             links.forEach((link) => {
-                link.classList.toggle('docs-link-active', link.getAttribute('href') === '#' + id);
+                const isActive = link.getAttribute('href') === '#' + id;
+                link.classList.toggle('docs-link-active', isActive);
+                if (isActive) {
+                    currentLabel.textContent = link.textContent.trim();
+                }
             });
+        }
+
+        function setMenuOpen(open) {
+            menu.classList.toggle('hidden', !open);
+            menuToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+            menuIcon.classList.toggle('fa-chevron-up', open);
+            menuIcon.classList.toggle('fa-chevron-down', !open);
         }
 
         function currentSectionId() {
@@ -297,10 +322,27 @@ pages = body["result"]["text"]{% endraw %}</code></pre>
             window.addEventListener(eventName, handManualScroll, { passive: true });
         });
 
+        menuToggle.addEventListener('click', () => {
+            setMenuOpen(menu.classList.contains('hidden'));
+        });
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                setMenuOpen(false);
+            }
+        });
+
         links.forEach((link) => {
-            link.addEventListener('click', () => {
+            link.addEventListener('click', (event) => {
+                event.preventDefault();
+                const id = link.getAttribute('href').slice(1);
+                const target = document.getElementById(id);
                 followScroll = false;
-                setActive(link.getAttribute('href').slice(1));
+                setActive(id);
+                setMenuOpen(false);
+                if (target) {
+                    target.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+                }
+                history.replaceState(null, '', '#' + id);
             });
         });
         window.addEventListener('scroll', () => {
