@@ -5,7 +5,7 @@ import re
 import random
 from flask import session
 from werkzeug.security import generate_password_hash, check_password_hash
-from payments.models import Plan, FREE_PLAN_ID
+from payments.models import Plan, FREE_PLAN_ID, OverageReport
 from datetime import datetime, timedelta
 from keymanager.models import ApiKey, ApiUsage
 import stripe
@@ -324,6 +324,7 @@ def auth_routes_init(app):
         ApiUsage.query.filter_by(user_id=user.id).delete()
         ApiKey.query.filter_by(user_id=user.id).delete()
         ResetToken.query.filter_by(user_id=user.id).delete()
+        OverageReport.query.filter_by(user_id=user.id).delete()
         record_deletion(user.email)
         db.session.delete(user)
         db.session.commit()

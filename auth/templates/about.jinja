@@ -1,0 +1,57 @@
+{% extends 'base.jinja' %}
+
+{% block content %}
+<div class="pt-24 pb-16 px-4 sm:px-8 max-w-3xl mx-auto flex flex-col gap-10">
+    <div class="flex flex-col gap-3">
+        <p class="text-3xl sm:text-4xl md:text-5xl font-extrabold transition-colors duration-150"
+           :class="isDark ? 'text-white' : 'text-black'">About Bibliove</p>
+        <p class="text-lg" :class="isDark ? 'text-neutral-400' : 'text-neutral-600'">
+            Bibliove turns PDFs and scanned images into plain text through a simple HTTP API. Send a document, get a job ID, and collect the text when it's ready.
+        </p>
+    </div>
+
+    <section class="flex flex-col gap-3">
+        <p class="text-2xl font-bold" :class="isDark ? 'text-white' : 'text-black'">What it does</p>
+        <p :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">
+            Text-based PDFs are read directly. Pages without a text layer, such as scans and photographs of documents, are read with optical character recognition (OCR). Each page comes back as its own entry, so you can process documents page by page.
+        </p>
+    </section>
+
+    <section class="flex flex-col gap-3">
+        <p class="text-2xl font-bold" :class="isDark ? 'text-white' : 'text-black'">Who it's for</p>
+        <p :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">
+            Developers and small teams who need text from documents inside their own applications, without building and running OCR infrastructure themselves.
+        </p>
+    </section>
+
+    <section class="flex flex-col gap-3">
+        <p class="text-2xl font-bold" :class="isDark ? 'text-white' : 'text-black'">How we handle your data</p>
+        <ul class="flex flex-col gap-2 list-disc pl-5" :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">
+            <li>We keep only what the service needs. Uploaded PDFs are deleted once they have been processed.</li>
+            <li>We never sell your data, and we don't use it for advertising.</li>
+            <li>Passwords are stored only as hashes, and API keys are shown once and stored only as hashes.</li>
+            <li>You can delete your account at any time from Settings.</li>
+        </ul>
+        <p :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">
+            The full details are in our <a href="/privacy" class="text-orange-600 hover:opacity-80">Privacy Policy</a>.
+        </p>
+    </section>
+
+    <section class="flex flex-col gap-3">
+        <p class="text-2xl font-bold" :class="isDark ? 'text-white' : 'text-black'">Get started</p>
+        <p :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">
+            Read the <a href="/docs" class="text-orange-600 hover:opacity-80">API documentation</a>, compare <a href="/pricing" class="text-orange-600 hover:opacity-80">plans</a>, or create an account to get your first key.
+        </p>
+    </section>
+
+    <section class="flex flex-col gap-3 pt-6 border-t" :class="isDark ? 'border-neutral-800' : 'border-neutral-300'">
+        <p class="text-2xl font-bold" :class="isDark ? 'text-white' : 'text-black'">Company</p>
+        <p :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">
+            Bibliove is operated by <span class="font-mono text-orange-600">[legal entity name]</span>, <span class="font-mono text-orange-600">[registered address]</span>.
+        </p>
+        <p :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">
+            Contact: <span class="font-mono text-orange-600">[contact email]</span>
+        </p>
+    </section>
+</div>
+{% endblock %}

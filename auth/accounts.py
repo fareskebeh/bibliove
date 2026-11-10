@@ -27,7 +27,11 @@ def reentry_available_on(email):
     if record is None:
         return None
     available = record.deleted_at + REENTRY_COOLDOWN
-    return available if available > datetime.now() else None
+    if available > datetime.now():
+        return available
+    db.session.delete(record)
+    db.session.commit()
+    return None
 
 
 def record_deletion(email):

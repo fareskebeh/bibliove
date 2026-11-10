@@ -1,0 +1,125 @@
+{% extends 'base.jinja' %}
+
+{% block content %}
+<div class="pt-24 pb-16 px-4 sm:px-8 max-w-3xl mx-auto flex flex-col gap-8">
+    <div class="flex flex-col gap-2">
+        <p class="text-3xl sm:text-4xl md:text-5xl font-extrabold transition-colors duration-150"
+           :class="isDark ? 'text-white' : 'text-black'">Privacy Policy</p>
+        <p class="text-sm" :class="isDark ? 'text-neutral-400' : 'text-neutral-600'">Last updated: 10 November 2026</p>
+    </div>
+
+    <div class="p-4 rounded-xl border text-sm" :class="isDark ? 'bg-neutral-900 border-neutral-800 text-neutral-300' : 'bg-white border-neutral-300 text-neutral-700'">
+        Items in <span class="font-mono text-orange-600">[square brackets]</span> must be completed before this policy is published. This draft describes how the service works today. It is not legal advice, and it should be reviewed by a lawyer who knows the laws that apply to you.
+    </div>
+
+    <div class="flex flex-col gap-8 text-base leading-relaxed" :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">
+
+        <section class="flex flex-col gap-3">
+            <p class="text-xl font-bold" :class="isDark ? 'text-white' : 'text-black'">1. Who we are</p>
+            <p>Bibliove is operated by <span class="font-mono text-orange-600">[legal entity name]</span>, <span class="font-mono text-orange-600">[registered address]</span> (“we”, “us”). For privacy questions, contact <span class="font-mono text-orange-600">[privacy contact email]</span>. <span class="font-mono text-orange-600">[If required in your jurisdiction, add your data protection representative or DPO details.]</span></p>
+        </section>
+
+        <section class="flex flex-col gap-3">
+            <p class="text-xl font-bold" :class="isDark ? 'text-white' : 'text-black'">2. What we collect</p>
+            <p><strong>Account information.</strong> Your email address, a hash of your password (we never store the password itself), whether your email is verified, your plan, and when your account was created.</p>
+            <p><strong>API keys.</strong> The name of each key and when it was created. The key itself is shown to you once and stored only as a one-way hash.</p>
+            <p><strong>Usage records.</strong> For each request we accept, the time, the key used, and the number of pages processed. We use these to show your usage, to enforce plan limits, and to bill overage.</p>
+            <p><strong>Documents you upload.</strong> The PDF or image you send us is stored temporarily while it is processed and is deleted afterwards. The extracted text is kept for 24 hours so you can collect it from the status endpoint, then removed.</p>
+            <p><strong>Payment information.</strong> Payments are handled by Stripe. We do not receive or store your card number. We store your Stripe customer ID, and we record your subscription status and plan from Stripe’s notifications.</p>
+            <p><strong>Technical data.</strong> Your IP address, which we use for rate limiting and in our server logs. A session cookie that keeps you signed in. Your light or dark theme choice, saved in your browser’s local storage.</p>
+            <p><strong>Email.</strong> Verification codes and password reset links are sent to you by email through our email provider.</p>
+        </section>
+
+        <section class="flex flex-col gap-3">
+            <p class="text-xl font-bold" :class="isDark ? 'text-white' : 'text-black'">3. Why we use it and our legal basis</p>
+            <ul class="flex flex-col gap-2 list-disc pl-5">
+                <li><strong>To provide the service</strong> (account, API, processing, usage limits and billing): necessary to perform our contract with you.</li>
+                <li><strong>To keep the service secure</strong> (rate limiting, protection against fraud and abuse, preventing duplicate accounts): our legitimate interest in running a safe service.</li>
+                <li><strong>To meet legal duties</strong> (tax and accounting records, responding to lawful requests): compliance with legal obligations.</li>
+                <li><strong>To communicate with you</strong> about your account and security: necessary for the contract, and for account security.</li>
+            </ul>
+            <p>We do not use your data for advertising, and we do not sell it or share it for cross-context behavioural advertising.</p>
+        </section>
+
+        <section class="flex flex-col gap-3">
+            <p class="text-xl font-bold" :class="isDark ? 'text-white' : 'text-black'">4. How long we keep it</p>
+            <div class="overflow-x-auto rounded-xl border" :class="isDark ? 'border-neutral-800' : 'border-neutral-300'">
+                <table class="w-full text-sm text-left">
+                    <thead :class="isDark ? 'bg-neutral-900 text-neutral-300' : 'bg-neutral-100 text-neutral-700'">
+                        <tr><th class="p-3 font-semibold">Data</th><th class="p-3 font-semibold">Kept for</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-t" :class="isDark ? 'border-neutral-800' : 'border-neutral-200'"><td class="p-3">Account and API key records</td><td class="p-3">Until you delete your account</td></tr>
+                        <tr class="border-t" :class="isDark ? 'border-neutral-800' : 'border-neutral-200'"><td class="p-3">Usage records</td><td class="p-3">Until you delete your account</td></tr>
+                        <tr class="border-t" :class="isDark ? 'border-neutral-800' : 'border-neutral-200'"><td class="p-3">Uploaded documents</td><td class="p-3">Deleted once processing finishes</td></tr>
+                        <tr class="border-t" :class="isDark ? 'border-neutral-800' : 'border-neutral-200'"><td class="p-3">Extracted text</td><td class="p-3">24 hours</td></tr>
+                        <tr class="border-t" :class="isDark ? 'border-neutral-800' : 'border-neutral-200'"><td class="p-3">Reset links</td><td class="p-3">One hour</td></tr>
+                        <tr class="border-t" :class="isDark ? 'border-neutral-800' : 'border-neutral-200'"><td class="p-3">Record that a deleted email cannot re-register (keyed hash, not the email)</td><td class="p-3">30 days, then removed</td></tr>
+                        <tr class="border-t" :class="isDark ? 'border-neutral-800' : 'border-neutral-200'"><td class="p-3">Server logs (including IP addresses)</td><td class="p-3">[retention period]</td></tr>
+                        <tr class="border-t" :class="isDark ? 'border-neutral-800' : 'border-neutral-200'"><td class="p-3">Billing and tax records</td><td class="p-3">[retention period required by law]</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <p>When you delete your account, we remove your account, API keys and usage records. Payment records held by Stripe are governed by Stripe’s own retention rules.</p>
+        </section>
+
+        <section class="flex flex-col gap-3">
+            <p class="text-xl font-bold" :class="isDark ? 'text-white' : 'text-black'">5. Who we share it with</p>
+            <p>We share data only with service providers who process it on our behalf, and only as needed to run the service:</p>
+            <ul class="flex flex-col gap-2 list-disc pl-5">
+                <li><strong>Stripe</strong> (payments and subscription billing), <span class="font-mono text-orange-600">[Stripe entity and country]</span>.</li>
+                <li><strong>Resend</strong> (sending verification and password reset emails), <span class="font-mono text-orange-600">[Resend entity and country]</span>.</li>
+                <li><strong>Aiven</strong> (database hosting), <span class="font-mono text-orange-600">[hosting region]</span>.</li>
+                <li><strong>[Hosting provider]</strong> (application servers and Redis), <span class="font-mono text-orange-600">[region]</span>.</li>
+                <li><strong>Cloudflare cdnjs</strong>, which serves icon and code libraries to your browser. Loading these shares your IP address with Cloudflare.</li>
+            </ul>
+            <p>We may also disclose data if the law requires it. We will not sell your personal information.</p>
+        </section>
+
+        <section class="flex flex-col gap-3">
+            <p class="text-xl font-bold" :class="isDark ? 'text-white' : 'text-black'">6. International transfers</p>
+            <p>Some of our providers are located outside your country, including in the United States. Where personal data is transferred outside the European Economic Area, the United Kingdom or Switzerland, we rely on the transfer safeguards those jurisdictions recognise, such as Standard Contractual Clauses. <span class="font-mono text-orange-600">[Confirm the safeguards in place with each provider.]</span></p>
+        </section>
+
+        <section class="flex flex-col gap-3">
+            <p class="text-xl font-bold" :class="isDark ? 'text-white' : 'text-black'">7. Cookies and similar technologies</p>
+            <p>We use only what the service needs. A session cookie keeps you signed in and protects our forms against cross-site request forgery. Your theme choice is stored in your browser’s local storage. We do not use advertising or analytics cookies.</p>
+        </section>
+
+        <section class="flex flex-col gap-3">
+            <p class="text-xl font-bold" :class="isDark ? 'text-white' : 'text-black'">8. Security</p>
+            <p>We hash passwords and API keys, protect forms against forged requests, rate-limit requests, verify payment notifications by signature, and restrict access to our systems. <span class="font-mono text-orange-600">[Describe encryption in transit and at rest once production hosting is configured.]</span> No system is completely secure, so please use a strong, unique password and keep your API keys private.</p>
+        </section>
+
+        <section class="flex flex-col gap-3">
+            <p class="text-xl font-bold" :class="isDark ? 'text-white' : 'text-black'">9. Your rights</p>
+            <p>Depending on where you live, you may have the right to:</p>
+            <ul class="flex flex-col gap-2 list-disc pl-5">
+                <li>access the personal data we hold about you;</li>
+                <li>correct inaccurate data;</li>
+                <li>delete your data, which you can do yourself from Settings;</li>
+                <li>receive a copy of your data in a portable format;</li>
+                <li>object to or restrict certain processing, and withdraw consent where we rely on it;</li>
+                <li>complain to a data protection authority.</li>
+            </ul>
+            <p>To exercise these rights, email <span class="font-mono text-orange-600">[privacy contact email]</span>. We respond within 30 days, or sooner where the law requires it. We may ask you to confirm your identity first.</p>
+            <p><strong>California residents:</strong> you have the rights to know, delete and correct personal information, and the right not to be discriminated against for exercising them. We do not sell or share personal information for cross-context behavioural advertising.</p>
+        </section>
+
+        <section class="flex flex-col gap-3">
+            <p class="text-xl font-bold" :class="isDark ? 'text-white' : 'text-black'">10. Children</p>
+            <p>Bibliove is not directed at children under 16, and we do not knowingly collect personal data from them. If you believe a child has given us data, contact us and we will delete it.</p>
+        </section>
+
+        <section class="flex flex-col gap-3">
+            <p class="text-xl font-bold" :class="isDark ? 'text-white' : 'text-black'">11. Changes to this policy</p>
+            <p>If we change this policy, we will update the date above and, for material changes, tell you by email or in the service before the change takes effect.</p>
+        </section>
+
+        <section class="flex flex-col gap-3">
+            <p class="text-xl font-bold" :class="isDark ? 'text-white' : 'text-black'">12. Contact</p>
+            <p>Questions about this policy: <span class="font-mono text-orange-600">[privacy contact email]</span>, <span class="font-mono text-orange-600">[postal address]</span>.</p>
+        </section>
+    </div>
+</div>
+{% endblock %}

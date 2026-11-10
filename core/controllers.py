@@ -88,6 +88,14 @@ def core_routes_init(app):
         except NoSuchJobError:
             return {"status": "not_found"}, 404
 
+    @app.route('/about', methods=['GET'])
+    def about_page():
+        return render_template('about.jinja', is_authenticated=bool(session.get('email')))
+
+    @app.route('/privacy', methods=['GET'])
+    def privacy_page():
+        return render_template('privacy.jinja', is_authenticated=bool(session.get('email')))
+
     @app.route('/docs', methods=['GET'])
     def api_docs():
         return render_template('docs.jinja', is_authenticated=bool(session.get('email')))

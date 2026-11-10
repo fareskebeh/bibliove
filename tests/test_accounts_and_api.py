@@ -185,5 +185,35 @@ class Pricing(unittest.TestCase):
         self.assertTrue("/register?plan=starter" in html)
 
 
+
+class Pages(unittest.TestCase):
+    def setUp(self):
+        reset_database()
+
+    def test_about_and_privacy_render(self):
+        client = app.test_client()
+        self.assertEqual(client.get("/about").status_code, 200)
+        self.assertEqual(client.get("/privacy").status_code, 200)
+
+    def test_footer_links_both_pages(self):
+        html = app.test_client().get("/home").get_data(as_text=True)
+        self.assertTrue('href="/about"' in html and 'href="/privacy"' in html)
+
+
+class CooldownPurge(unittest.TestCase):
+    def setUp(self):
+        reset_database()
+
+    def test_expired_record_is_removed_on_check(self):
+        from datetime import datetime, timedelta
+        from auth.models import DeletedAccount
+        from auth.accounts import email_fingerprint, reentry_available_on
+        with app.app_context():
+            db.session.add(DeletedAccount(email_hash=email_fingerprint("old@test.dev"), deleted_at=datetime.now() - timedelta(days=31)))
+            db.session.commit()
+            self.assertIsNone(reentry_available_on("old@test.dev"))
+            self.assertIsNone(db.session.get(DeletedAccount, email_fingerprint("old@test.dev")))
+
+
 if __name__ == "__main__":
     unittest.main()
