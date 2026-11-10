@@ -246,6 +246,7 @@ pages = body["result"]["text"]{% endraw %}</code></pre>
     .docs-code .token.variable { color: #f9a8d4; }
     .docs-code .token.attr-name { color: #7dd3fc; }
     .docs-link-active { color: #ea580c; background: rgba(234, 88, 12, 0.1); }
+    section[id] { scroll-margin-top: 7rem; }
 </style>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
@@ -265,16 +266,50 @@ pages = body["result"]["text"]{% endraw %}</code></pre>
             });
         }
 
-        if ('IntersectionObserver' in window && sections.length) {
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach((entry) => {
-                    if (entry.isIntersecting) {
-                        setActive(entry.target.id);
-                    }
-                });
-            }, { rootMargin: '-30% 0px -60% 0px' });
-            sections.forEach((section) => observer.observe(section));
+        function currentSectionId() {
+            if (!sections.length) {
+                return null;
+            }
+            const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4;
+            if (atBottom) {
+                return sections[sections.length - 1].id;
+            }
+            let current = sections[0].id;
+            sections.forEach((section) => {
+                if (section.getBoundingClientRect().top <= window.innerHeight * 0.25) {
+                    current = section.id;
+                }
+            });
+            return current;
         }
+
+        let scrollFrame = 0;
+        function refreshActive() {
+            cancelAnimationFrame(scrollFrame);
+            scrollFrame = requestAnimationFrame(() => setActive(currentSectionId()));
+        }
+
+        let followScroll = true;
+        function handManualScroll() {
+            followScroll = true;
+        }
+        ['wheel', 'touchmove', 'keydown', 'pointerdown'].forEach((eventName) => {
+            window.addEventListener(eventName, handManualScroll, { passive: true });
+        });
+
+        links.forEach((link) => {
+            link.addEventListener('click', () => {
+                followScroll = false;
+                setActive(link.getAttribute('href').slice(1));
+            });
+        });
+        window.addEventListener('scroll', () => {
+            if (followScroll) {
+                refreshActive();
+            }
+        }, { passive: true });
+        window.addEventListener('resize', refreshActive);
+        refreshActive();
     })();
 </script>
 {% endblock %}
