@@ -11,6 +11,7 @@ from keymanager.models import ApiKey
 from payments.models import Plan
 from extensions import limiter
 from payments.controllers import payment_routes_init
+from flask_wtf.csrf import generate_csrf
 
 load_dotenv()
 
@@ -21,6 +22,8 @@ app.config["SESSION_COOKIE_SAMESITE"] = os.getenv("SESSION_COOKIE_SAMESITE")
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 app.config['STRIPE_SECRET_KEY'] = os.getenv('STRIPE_SECRET_KEY')
 app.config['STRIPE_PUBLISHABLE_KEY'] = os.getenv('STRIPE_PUBLISHABLE_KEY')
+app.config['WTF_CSRF_TIME_LIMIT'] = None
+app.jinja_env.globals['csrf_token'] = generate_csrf
 
 
 db.init_app(app)

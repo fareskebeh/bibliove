@@ -14,7 +14,15 @@
                 <a class="font-bold text-orange-600 border-b-2 border-dotted hover:opacity-80 transition" href="/login">Log in</a>
             </p>
             
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for category, message in messages %}
+                    <div class="text-sm {% if category == 'success' %}text-green-500{% elif category == 'error' %}text-red-500{% elif category == 'warning' %}text-yellow-600{% else %}text-blue-500{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endwith %}
             <form method="POST" action="/register" class="flex flex-col gap-4 items-start w-full" id="registerForm" novalidate>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input 
                     placeholder="E-mail" 
                     type="email" 

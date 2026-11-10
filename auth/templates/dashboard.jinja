@@ -49,20 +49,25 @@
                 </div>
                 {% endfor %}
                 
-                <a href="{{ '/keys/create' if can_create else '/upgrade-plan' }}" 
-                class="mt-2 rounded-lg w-full p-4 flex items-center justify-center shadow-md transition duration-150 {{ 'cursor-pointer hover:opacity-90' if can_create }}" 
-                :class="isDark ? 'bg-neutral-700' : 'bg-neutral-300'">
-                    {% if can_create %}
-                    <span class="mr-2">Create a new key</span>
-                    <i class="fas fa-plus text-2xl"></i>
-                    {% else %}
+                {% if can_create %}
+                <form method="POST" action="/keys/create" class="mt-2">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="rounded-lg w-full p-4 flex items-center justify-center shadow-md transition duration-150 cursor-pointer hover:opacity-90"
+                            :class="isDark ? 'bg-neutral-700' : 'bg-neutral-300'">
+                        <span class="mr-2">Create a new key</span>
+                        <i class="fas fa-plus text-2xl"></i>
+                    </button>
+                </form>
+                {% else %}
+                <a href="/upgrade-plan" class="mt-2 rounded-lg w-full p-4 flex items-center justify-center shadow-md transition duration-150"
+                   :class="isDark ? 'bg-neutral-700' : 'bg-neutral-300'">
                     <p>
                         {% if is_free %}
                             Upgrade to get more keys and quota
                         {% endif %}
                     </p>
-                    {% endif %}
                 </a>
+                {% endif %}
             </div>
             <section class="pt-6 flex flex-col gap-3">
                 <p class="font-black text-2xl">Recent requests</p>

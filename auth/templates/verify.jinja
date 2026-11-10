@@ -14,6 +14,7 @@
 
     <div class="h-dvh flex items-center justify-center">
         <form method="POST" action="{{ url_for('verify_email') }}" :class="isDark ? 'border-neutral-800 bg-neutral-900' : 'border-neutral-300 bg-white'" class="flex p-8 rounded-xl shadow-lg border flex-col gap-4 justify-center items-center">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <svg class="w-15 shadow-[0_0_20px_10px_#22c55e] rounded-full" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" fill="#22c55e"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path fill="#22c55e" d="M512 64a448 448 0 1 1 0 896 448 448 0 0 1 0-896zm-55.808 536.384-99.52-99.584a38.4 38.4 0 1 0-54.336 54.336l126.72 126.72a38.272 38.272 0 0 0 54.336 0l262.4-262.464a38.4 38.4 0 1 0-54.272-54.336L456.192 600.384z"></path></g></svg>
             <p :class="isDark ? 'text-white' : 'text-neutral-800'" class="text-3xl font-bold">Verification email sent!</p>
             <p :class="isDark ? 'text-neutral-400' : 'text-neutral-500'" class="text-xl">Enter the code we sent to your email to verify</p>

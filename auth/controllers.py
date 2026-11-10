@@ -14,7 +14,7 @@ import secrets
 import os
 from dotenv import load_dotenv
 import resend
-from extensions import limiter
+from extensions import limiter, csrf_valid
 
 load_dotenv()
 
@@ -39,6 +39,10 @@ def auth_routes_init(app):
     @app.route('/register', methods=['GET', 'POST'])
     @limiter.limit('10/hour')
     def register():
+
+        if request.method == 'POST' and not csrf_valid():
+            flash("Your session expired, please try again", "error")
+            return redirect(request.full_path)
         #  get the plan they chose ln #42
         chosen_plan = request.args.get('plan')
         is_authenticated = True if session.get("email") else False
@@ -95,6 +99,10 @@ def auth_routes_init(app):
     @app.route("/verify", methods=["GET", "POST"])
     @limiter.limit('20/hour')
     def verify_email():
+
+        if request.method == 'POST' and not csrf_valid():
+            flash("Your session expired, please try again", "error")
+            return redirect(request.full_path)
         email = session.get("pending_verification_email")
         if not email:
             flash("No verification in progress", "error")
@@ -127,6 +135,10 @@ def auth_routes_init(app):
     @app.route('/login', methods=['GET', 'POST'])
     @limiter.limit('10/minute')
     def login():
+
+        if request.method == 'POST' and not csrf_valid():
+            flash("Your session expired, please try again", "error")
+            return redirect(request.full_path)
         is_authenticated = True if session.get("email") else False
         if is_authenticated:
             return redirect("/home")
@@ -206,6 +218,10 @@ def auth_routes_init(app):
     @app.route('/password-reset', methods=['GET', 'POST'])
     @limiter.limit('5/hour')
     def forgot_pw():
+
+        if request.method == 'POST' and not csrf_valid():
+            flash("Your session expired, please try again", "error")
+            return redirect(request.full_path)
         is_authenticated = True if session.get("email") else False
         if request.method == 'POST':
             email = request.form['email']
@@ -233,6 +249,10 @@ def auth_routes_init(app):
     @app.route('/reset-password', methods=['GET', 'POST'])
     @limiter.limit('10/hour')
     def reset_password():
+
+        if request.method == 'POST' and not csrf_valid():
+            flash("Your session expired, please try again", "error")
+            return redirect(request.full_path)
         is_authenticated = True if session.get("email") else False
         
         token = request.args.get('token')

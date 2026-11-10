@@ -2,7 +2,7 @@ from db.extensions import db
 from auth.models import User
 from flask import session, jsonify, request, render_template, flash, redirect, make_response
 from .models import ApiKey, ApiUsage
-from extensions import limiter
+from extensions import limiter, csrf_valid
 from payments.models import FREE_PLAN_ID
 from hashlib import sha256
 import secrets
@@ -18,12 +18,14 @@ def key_routes_init(app):
             return {"error": "User not found"}, 404
         return str(user.key_count)
     
-    @app.route("/keys/create", methods=["POST", "GET"])
+    @app.route("/keys/create", methods=["POST"])
     @limiter.limit('20/minute')
     def create_key():
         is_authenticated=True if session.get("email") else False 
         if not is_authenticated:
             return make_response({"message": "Unable to create key, requires authentication"}, 401)
+        if not csrf_valid():
+            return make_response({"message": "Your session expired, please refresh the page"}, 400)
         user = User.query.filter(User.email==session.get("email")).first()
         if not user:
             return redirect("/")
@@ -45,6 +47,8 @@ def key_routes_init(app):
         is_authenticated = True if session.get("email") else False 
         if not is_authenticated:
             return jsonify({"message": "Unauthorized to perform this operation"}), 401
+        if not csrf_valid():
+            return jsonify({"message": "Your session expired, please refresh the page"}), 400
         
         try:
             data = request.get_json()
