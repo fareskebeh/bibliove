@@ -23,8 +23,8 @@
     </script>
     <meta name="color-scheme" content="light dark">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="{{ url_for('static', filename='vendor/tailwindcss-browser-4.3.3.js') }}"></script>
+    <script defer src="{{ url_for('static', filename='vendor/alpinejs-3.17.5.min.js') }}"></script>
     <title>Bibliove</title>
 </head>
 <body x-data="{ 
@@ -42,7 +42,7 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content,
+                    'X-CSRFToken': document.querySelector('meta[name=csrf-token]').content,
                 },
                 body: JSON.stringify({
                     key_id: this.keyToDelete
