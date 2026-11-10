@@ -1,6 +1,8 @@
 from db.extensions import db
 from sqlalchemy import JSON
 
+FREE_PLAN_ID = 1
+
 class Plan(db.Model):
     __tablename__='plans'
 

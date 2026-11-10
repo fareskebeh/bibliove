@@ -5,7 +5,8 @@ import re
 import random
 from flask import session
 from werkzeug.security import generate_password_hash, check_password_hash
-from payments.models import Plan
+from payments.models import Plan, FREE_PLAN_ID
+from datetime import datetime
 from keymanager.models import ApiKey
 from hashlib import sha256
 import secrets
@@ -110,8 +111,8 @@ def auth_routes_init(app):
                     user.is_verified = True
                     db.session.commit()
                     session.pop('pending_verification_code', None)
-                    chosen_plan = session.get('chosen_plan_id')
-                    if not chosen_plan or chosen_plan =='Free':
+                    chosen_plan = (session.get('chosen_plan_id') or '').strip().lower()
+                    if not chosen_plan or chosen_plan == 'free':
                         flash("Email verified! Please log in.", "success")
                         session.pop('pending_verification_email', None)
                         return redirect("/login")
@@ -181,7 +182,10 @@ def auth_routes_init(app):
             session.clear()
             return redirect("/")
         user_keys = ApiKey.query.filter(ApiKey.user_id==user.id)
-        return render_template("dashboard.jinja", is_authenticated=is_authenticated, email=session.get("email"), user_keys=user_keys, user=user)
+        plan = db.session.get(Plan, user.plan_id)
+        is_free = user.plan_id == FREE_PLAN_ID
+        can_create = not is_free or user.key_count < 1
+        return render_template("dashboard.jinja", is_authenticated=is_authenticated, email=session.get("email"), user_keys=user_keys, user=user, plan=plan, is_free=is_free, can_create=can_create)
 
     @app.route('/pricing')
     @limiter.limit('100/minute')
@@ -228,7 +232,7 @@ def auth_routes_init(app):
         if token:
             query_hash= str(sha256(token.encode()).hexdigest())
             match = ResetToken.query.filter_by(hash=query_hash).first()
-            if not match or match.used:
+            if not match or match.used or match.expires_at is None or match.expires_at < datetime.now():
                 #TODO: placeholder for error msg/page
                 return redirect('/')
             else:

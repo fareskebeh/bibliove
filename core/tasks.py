@@ -2,7 +2,7 @@ import pymupdf
 from PIL import Image
 import pytesseract
 from auth.models import User
-from payments.models import Plan
+from payments.models import Plan, FREE_PLAN_ID
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import os
@@ -27,10 +27,10 @@ def extract_text(fp, user_id):
             remaining=user_plan.quota_limit - user.master_quota
             status=""
             pages_to_process=0
-            if user.plan_id ==1:
+            if user.plan_id == FREE_PLAN_ID:
                 if remaining <=0:
                     status="error"
-                    return {"error" : "Quota limit has been reached, Upgrade to a paid plan to process overage or wait until the limit resets", "status": status, "code": 429}
+                    return {"error" : "Quota limit has been reached, Upgrade to a paid plan to process more pages", "status": status, "code": 429}
                 if remaining < len(doc):
                     status="partial"
                     pages_to_process=remaining

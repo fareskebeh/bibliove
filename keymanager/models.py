@@ -8,4 +8,4 @@ class ApiKey(db.Model):
     key_hash = db.Column(db.String(255), nullable=False)
     name=db.Column(db.String(100))
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.now())
+    created_at = db.Column(db.DateTime, default=datetime.now)
