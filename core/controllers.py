@@ -1,4 +1,5 @@
-from keymanager.models import ApiKey
+from keymanager.models import ApiKey, ApiUsage
+from db.extensions import db
 from hashlib import sha256
 from flask import request, jsonify, make_response, render_template, session
 from uuid import uuid4
@@ -27,6 +28,8 @@ def core_routes_init(app):
             query_hash= str(sha256(key.encode()).hexdigest())
             match=ApiKey.query.filter(ApiKey.key_hash==query_hash).first()
             if match:
+                db.session.add(ApiUsage(key_id=match.id, user_id=match.user_id))
+                db.session.commit()
                 job_id=uuid4().hex
                 temp_path = f"/tmp/{job_id}.pdf"
 

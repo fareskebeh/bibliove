@@ -6,8 +6,8 @@ import random
 from flask import session
 from werkzeug.security import generate_password_hash, check_password_hash
 from payments.models import Plan, FREE_PLAN_ID
-from datetime import datetime
-from keymanager.models import ApiKey
+from datetime import datetime, timedelta
+from keymanager.models import ApiKey, ApiUsage
 from hashlib import sha256
 import secrets
 import os
@@ -179,10 +179,20 @@ def auth_routes_init(app):
             session.clear()
             return redirect("/")
         user_keys = ApiKey.query.filter(ApiKey.user_id==user.id)
+        keys = user_keys.all()
+        usage_hours = 168
+        usage_since = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(hours=usage_hours - 1)
+        buckets = {k.id: [0] * usage_hours for k in keys}
+        for row in ApiUsage.query.filter(ApiUsage.user_id==user.id, ApiUsage.created_at>=usage_since).all():
+            index = int((row.created_at - usage_since).total_seconds() // 3600)
+            if row.key_id in buckets and 0 <= index < usage_hours:
+                buckets[row.key_id][index] += 1
+        usage_keys = [{"id": k.id, "name": k.name, "counts": buckets[k.id]} for k in keys]
+        usage_start_ms = int(usage_since.timestamp() * 1000)
         plan = db.session.get(Plan, user.plan_id)
         is_free = user.plan_id == FREE_PLAN_ID
         can_create = not is_free or user.key_count < 1
-        return render_template("dashboard.jinja", is_authenticated=is_authenticated, email=session.get("email"), user_keys=user_keys, user=user, plan=plan, is_free=is_free, can_create=can_create)
+        return render_template("dashboard.jinja", is_authenticated=is_authenticated, email=session.get("email"), user_keys=keys, user=user, plan=plan, is_free=is_free, can_create=can_create, usage_keys=usage_keys, usage_start_ms=usage_start_ms)
 
     @app.route('/pricing')
     @limiter.limit('100/minute')

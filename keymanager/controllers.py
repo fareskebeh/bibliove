@@ -1,7 +1,7 @@
 from db.extensions import db
 from auth.models import User
 from flask import session, jsonify, request, render_template, flash, redirect, make_response
-from .models import ApiKey
+from .models import ApiKey, ApiUsage
 from payments.models import FREE_PLAN_ID
 from hashlib import sha256
 import secrets
@@ -56,6 +56,7 @@ def key_routes_init(app):
             key = ApiKey.query.filter_by(id=key_id, user_id=user.id).first()
             if not key:
                 return jsonify({"message": "Key not found or you don't have permission to delete it"}), 404
+            ApiUsage.query.filter_by(key_id=key.id).delete()
             db.session.delete(key)
             db.session.commit()
             return jsonify({
