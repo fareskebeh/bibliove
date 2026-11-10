@@ -85,11 +85,14 @@
                 <p class="font-black text-2xl">Quick start</p>
                 <p :class="isDark ? 'text-neutral-400' : 'text-neutral-600'">Replace <code>YOUR_API_KEY</code> with the key you saved when you created it.</p>
                 <div class="rounded-lg overflow-hidden shadow-sm border" :class="isDark ? 'border-neutral-800' : 'border-neutral-300'">
-                    <div class="flex items-center justify-between px-3 py-2 bg-neutral-800 text-neutral-300 text-xs">
+                    <div class="flex items-center justify-between px-3 py-2 text-xs transition-colors duration-150"
+                         :class="isDark ? 'bg-neutral-800 text-neutral-300' : 'bg-neutral-200 text-neutral-700'">
                         <span>curl</span>
-                        <button type="button" id="quickstart-copy" class="px-2 py-1 rounded hover:bg-neutral-700 cursor-pointer transition duration-150">Copy</button>
+                        <button type="button" id="quickstart-copy" class="px-2 py-1 rounded cursor-pointer transition duration-150 hover:opacity-80"
+                                :class="isDark ? 'hover:bg-neutral-700' : 'hover:bg-neutral-300'">Copy</button>
                     </div>
-                    <pre id="quickstart-code" class="p-4 bg-neutral-900 text-neutral-100 text-sm font-mono overflow-x-auto"><code>curl -X POST "{{ request.host_url.rstrip('/')|e }}/extract" \
+                    <pre id="quickstart-code" class="p-4 text-sm font-mono overflow-x-auto transition-colors duration-150"
+                         :class="isDark ? 'bg-neutral-900 text-neutral-100' : 'bg-neutral-50 text-neutral-800'"><code>curl -X POST "{{ request.host_url.rstrip('/')|e }}/extract" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -F "pdf=@report.pdf"</code></pre>
                 </div>
