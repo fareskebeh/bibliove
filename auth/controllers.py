@@ -214,7 +214,9 @@ def auth_routes_init(app):
         plan = db.session.get(Plan, user.plan_id)
         is_free = user.plan_id == FREE_PLAN_ID
         can_create = not is_free or user.key_count < 1
-        return render_template("dashboard.jinja", is_authenticated=is_authenticated, email=session.get("email"), user_keys=keys, user=user, plan=plan, is_free=is_free, can_create=can_create, usage_keys=usage_keys, recent_requests=recent_requests)
+        overage_pages = max(0, user.master_quota - plan.quota_limit) if plan.overage_cents_per_page > 0 else 0
+        overage_amount = overage_pages * plan.overage_cents_per_page / 100
+        return render_template("dashboard.jinja", is_authenticated=is_authenticated, email=session.get("email"), user_keys=keys, user=user, plan=plan, is_free=is_free, can_create=can_create, usage_keys=usage_keys, recent_requests=recent_requests, overage_pages=overage_pages, overage_amount=overage_amount)
 
     @app.route('/pricing')
     @limiter.limit('100/minute')

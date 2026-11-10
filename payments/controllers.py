@@ -29,9 +29,9 @@ def payment_routes_init(app):
     def base_url():
         return request.host_url.rstrip('/')
 
-    def find_price_id(plan):
+    def find_price_id(plan, overage=False):
         prices = client.v1.prices.list(params={
-            'lookup_keys': [plan.stripe_lookup_key],
+            'lookup_keys': [plan.stripe_overage_lookup_key if overage else plan.stripe_lookup_key],
             'limit': 1,
         })
         return prices.data[0].id if prices.data else None
@@ -109,7 +109,8 @@ def payment_routes_init(app):
 
         try:
             price_id = find_price_id(plan)
-            if not price_id:
+            overage_price_id = find_price_id(plan, overage=True)
+            if not price_id or not overage_price_id:
                 return jsonify({'error': "This plan isn't available for checkout yet"}), 409
 
             customers = customers_for(user)
@@ -124,7 +125,7 @@ def payment_routes_init(app):
             metadata = {'user_id': str(user.id), 'plan_id': str(plan.id)}
             sub = client.v1.subscriptions.create(params={
                 'customer': customer_id,
-                'items': [{'price': price_id}],
+                'items': [{'price': price_id}, {'price': overage_price_id}],
                 'payment_behavior': 'default_incomplete',
                 'payment_settings': {'save_default_payment_method': 'on_subscription'},
                 'expand': ['latest_invoice.payments'],
@@ -137,6 +138,9 @@ def payment_routes_init(app):
         invoice_payments = sub.latest_invoice.payments.data if sub.latest_invoice and sub.latest_invoice.payments else []
         if not invoice_payments:
             return jsonify({'error': 'Could not start checkout, please try again'}), 502
+
+        user.stripe_customer_id = customer_id
+        db.session.commit()
 
         try:
             payment_intent = client.v1.payment_intents.retrieve(invoice_payments[0].payment.payment_intent)
