@@ -188,8 +188,9 @@ def auth_routes_init(app):
     def pricing():
         is_authenticated = True if session.get("email") else False
         user = User.query.filter(User.email==session.get("email")).first()
-        plans = Plan.query.all()
-        return render_template("pricing.jinja", plans=plans, is_authenticated=is_authenticated, user=user)
+        plans = Plan.query.order_by(Plan.price_cents).all()
+        current_plan = db.session.get(Plan, user.plan_id) if user else None
+        return render_template("pricing.jinja", plans=plans, is_authenticated=is_authenticated, user=user, current_plan=current_plan)
     
     @app.route('/password-reset', methods=['GET', 'POST'])
     @limiter.limit('5/hour')
