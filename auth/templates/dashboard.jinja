@@ -49,7 +49,7 @@
                 </div>
                 {% endfor %}
                 
-                <a href="{{ '/keys/create' if can_create else '/pricing' }}" 
+                <a href="{{ '/keys/create' if can_create else '/upgrade-plan' }}" 
                 class="mt-2 rounded-lg w-full p-4 flex items-center justify-center shadow-md transition duration-150 {{ 'cursor-pointer hover:opacity-90' if can_create }}" 
                 :class="isDark ? 'bg-neutral-700' : 'bg-neutral-300'">
                     {% if can_create %}
@@ -103,9 +103,16 @@
                     </label>
                     <p id="usage-total" class="text-sm" :class="isDark ? 'text-neutral-400' : 'text-neutral-600'"></p>
                 </div>
-                <div id="usage-scroll" class="max-w-full min-w-0 overflow-x-auto rounded-xl border p-4"
-                     :class="isDark ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-neutral-300'">
-                    <svg id="usage-chart" role="img" aria-label="Requests per hour over the last 7 days" class="block"></svg>
+                <div id="usage-frame" class="relative max-w-full min-w-0">
+                    <div id="usage-scroll" class="overflow-x-auto rounded-xl border p-4"
+                         :class="isDark ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-neutral-300'">
+                        <svg id="usage-chart" role="img" aria-label="Accepted requests over time" class="block"></svg>
+                    </div>
+                    <div id="usage-tooltip" class="hidden pointer-events-none absolute z-10 px-3 py-2 rounded-lg border shadow-lg whitespace-nowrap"
+                         :class="isDark ? 'bg-neutral-800 border-neutral-700 text-white' : 'bg-white border-neutral-300 text-black'">
+                        <p id="usage-tooltip-when" class="text-xs" :class="isDark ? 'text-neutral-400' : 'text-neutral-500'"></p>
+                        <p id="usage-tooltip-count" class="text-base font-bold text-orange-600"></p>
+                    </div>
                 </div>
                 <p class="text-xs" :class="isDark ? 'text-neutral-500' : 'text-neutral-500'">Scroll sideways for earlier periods. Each point counts accepted requests in one period: an hour, a day or a month, depending on the scope.</p>
                 {% else %}
@@ -207,6 +214,15 @@
             },
         };
 
+        const tooltip = document.getElementById('usage-tooltip');
+        const tooltipWhen = document.getElementById('usage-tooltip-when');
+        const tooltipCount = document.getElementById('usage-tooltip-count');
+        const frame = document.getElementById('usage-frame');
+        let activePoints = [];
+        let activeScope = null;
+        let guide = null;
+        let highlight = null;
+
         function node(name, attrs, text) {
             const element = document.createElementNS(NS, name);
             Object.entries(attrs).forEach(([key, value]) => element.setAttribute(key, value));
@@ -257,10 +273,6 @@
                 if (point.count > 0) {
                     svg.append(node('circle', { cx: point.x, cy: point.y, r: 3, fill: colors.line }));
                 }
-                const hit = node('rect', { x: LEFT + point.index * step, y: TOP, width: step, height: PLOT_HEIGHT, fill: 'transparent' });
-                hit.append(node('title', {}, scope.full(point.start) + ': ' + point.count + (point.count === 1 ? ' request' : ' requests')));
-                svg.append(hit);
-
                 if (point.index % scope.tickEvery === 0) {
                     svg.append(node('text', { x: LEFT + point.index * step, y: baseline + 22, fill: colors.text, 'font-size': 11 }, scope.short(point.start)));
                 }
@@ -268,10 +280,74 @@
 
             svg.append(node('line', { x1: LEFT, x2: width, y1: baseline, y2: baseline, stroke: colors.text, 'stroke-width': 1 }));
 
+            guide = node('line', { x1: 0, x2: 0, y1: TOP, y2: baseline, stroke: colors.text, 'stroke-dasharray': '3 3', visibility: 'hidden' });
+            highlight = node('circle', { cx: 0, cy: 0, r: 5, fill: colors.line, stroke: isDark ? '#171717' : '#ffffff', 'stroke-width': 2, visibility: 'hidden' });
+            svg.append(guide, highlight);
+
+            activePoints = points;
+            activeScope = scope;
+            hideTooltip();
+
             const total = counts.reduce((sum, count) => sum + count, 0);
             totalLabel.textContent = total + (total === 1 ? ' request' : ' requests') + ' in the ' + scope.window;
             scroller.scrollLeft = scroller.scrollWidth;
         }
+
+        function hideTooltip() {
+            tooltip.classList.add('hidden');
+            if (guide) {
+                guide.setAttribute('visibility', 'hidden');
+                highlight.setAttribute('visibility', 'hidden');
+            }
+        }
+
+        function pointAt(clientX) {
+            const rect = svg.getBoundingClientRect();
+            const x = clientX - rect.left;
+            if (!activeScope || x < LEFT) {
+                return null;
+            }
+            const index = Math.floor((x - LEFT) / activeScope.step);
+            return index >= 0 && index < activePoints.length ? activePoints[index] : null;
+        }
+
+        function showTooltip(event) {
+            const point = pointAt(event.clientX);
+            if (!point) {
+                hideTooltip();
+                return;
+            }
+
+            tooltipWhen.textContent = activeScope.full(point.start);
+            tooltipCount.textContent = point.count + (point.count === 1 ? ' request' : ' requests');
+            tooltip.classList.remove('hidden');
+
+            const frameRect = frame.getBoundingClientRect();
+            const cursorX = event.clientX - frameRect.left;
+            const cursorY = event.clientY - frameRect.top;
+            let left = cursorX + 16;
+            if (left + tooltip.offsetWidth > frameRect.width - 8) {
+                left = cursorX - tooltip.offsetWidth - 16;
+            }
+            let top = cursorY - tooltip.offsetHeight - 12;
+            if (top < 8) {
+                top = cursorY + 16;
+            }
+            top = Math.min(top, frameRect.height - tooltip.offsetHeight - 8);
+            tooltip.style.left = Math.max(8, left) + 'px';
+            tooltip.style.top = Math.max(8, top) + 'px';
+
+            guide.setAttribute('x1', point.x);
+            guide.setAttribute('x2', point.x);
+            guide.setAttribute('visibility', 'visible');
+            highlight.setAttribute('cx', point.x);
+            highlight.setAttribute('cy', point.y);
+            highlight.setAttribute('visibility', 'visible');
+        }
+
+        svg.addEventListener('pointermove', showTooltip);
+        svg.addEventListener('pointerleave', hideTooltip);
+        scroller.addEventListener('scroll', hideTooltip, { passive: true });
 
         function selectedKey() {
             return usageKeys.find((key) => String(key.id) === keySelect.value) || usageKeys[0];
