@@ -26,3 +26,9 @@ class ResetToken(db.Model):
     date_created=db.Column(db.DateTime, default=datetime.now)
     expires_at = db.Column(db.DateTime, default=lambda: datetime.now() + timedelta(hours=1))
     used = db.Column(db.Boolean, default=False)
+
+class DeletedAccount(db.Model):
+    __tablename__ = 'deleted_accounts'
+
+    email_hash = db.Column(db.String(64), primary_key=True)
+    deleted_at = db.Column(db.DateTime, nullable=False, default=datetime.now)

@@ -8,6 +8,9 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from payments.models import Plan, FREE_PLAN_ID
 from datetime import datetime, timedelta
 from keymanager.models import ApiKey, ApiUsage
+import stripe
+from auth.accounts import record_deletion, reentry_available_on
+from payments.billing import close_billing_for_user
 from keymanager.usage import scope_edges, usage_series
 from hashlib import sha256
 import secrets
@@ -55,6 +58,10 @@ def auth_routes_init(app):
             if email:
                 email_valid = re.match("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", email)
                 if email_valid:
+                    available_on = reentry_available_on(email)
+                    if available_on:
+                        flash(f"This email can't create a new account until {available_on:%B %d, %Y}.", "error")
+                        return redirect("/register")
                     user = User.query.filter_by(email=email).first()
                     if user:
                         if user.is_verified:
@@ -287,6 +294,36 @@ def auth_routes_init(app):
                         db.session.commit()
                         flash('Password successfully reset', 'success')
                         return redirect('/login')
+
+    @app.route('/account/delete', methods=['POST'])
+    @limiter.limit('5/hour')
+    def delete_account():
+        email = session.get('email')
+        user = User.query.filter_by(email=email).first() if email else None
+        if not user:
+            return redirect('/')
+        if not csrf_valid():
+            flash("Your session expired, please try again", "error")
+            return redirect('/settings')
+        password_ok = check_password_hash(user.password_hash or '', request.form.get('password', ''))
+        if not password_ok or request.form.get('confirmation', '') != 'delete my account':
+            flash("Check your password and type the confirmation text exactly", "error")
+            return redirect('/settings')
+        try:
+            close_billing_for_user(app.config['STRIPE_SECRET_KEY'], user)
+        except stripe.StripeError as e:
+            app.logger.error("Billing cleanup failed during account deletion: %s", e)
+            flash("We couldn't close your billing, so your account is unchanged. Please try again", "error")
+            return redirect('/settings')
+        ApiUsage.query.filter_by(user_id=user.id).delete()
+        ApiKey.query.filter_by(user_id=user.id).delete()
+        ResetToken.query.filter_by(user_id=user.id).delete()
+        record_deletion(user.email)
+        db.session.delete(user)
+        db.session.commit()
+        session.clear()
+        flash("Your account has been deleted. You can register again after 30 days.", "success")
+        return redirect('/')
 
     @app.route('/settings', methods=['GET'])
     @limiter.limit('100/minute')

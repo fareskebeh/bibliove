@@ -1,6 +1,7 @@
 {% extends "base.jinja" %}
 
 {% block content %}
+    <style>[x-cloak] { display: none !important; }</style>
     <div class="p-4 h-dvh flex flex-col gap-4 justify-center items-center">
         <div class="p-6 w-80 sm:w-120 rounded-xl overflow-y-auto shadow-md border flex flex-col gap-4 transition-colors duration-150"
              :class="isDark ? 'bg-neutral-800 border-neutral-700' : 'bg-white border-neutral-200'">
@@ -9,6 +10,11 @@
                :class="isDark ? 'text-neutral-200' : 'text-black'">Settings</p>
             
             
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for category, message in messages %}
+                    <div class="text-sm {% if category == 'success' %}text-green-500{% elif category == 'error' %}text-red-500{% elif category == 'warning' %}text-yellow-600{% else %}text-blue-500{% endif %}">{{ message }}</div>
+                {% endfor %}
+            {% endwith %}
             <div class="flex flex-col gap-4 items-start w-full">
 
                 <p class="font-bold text-2xl" :class="isDark ? 'text-white' : 'text-black'">Account</p>
@@ -35,12 +41,45 @@
 
                 <div class="h-px transition duration-150 w-full" :class='isDark ? "bg-neutral-700" : "bg-neutral-200"'></div>
 
-                <div class="flex justify-between hover:opacity-80 w-full items-center">
-                    <div class="flex p-2 gap-4 items-center">
-                        <i class="text-red-500 fas fa-trash"></i>
-                        <p class="text-red-500">Delete Account</p>
-                    </div>
+                <div x-data="{ open: false, confirmText: '' }">
+                    <button type="button" @click="open = true" class="flex justify-between hover:opacity-80 w-full items-center cursor-pointer">
+                        <div class="flex p-2 gap-4 items-center">
+                            <i class="text-red-500 fas fa-trash"></i>
+                            <p class="text-red-500">Delete Account</p>
+                        </div>
+                    </button>
 
+                    <div x-show="open" x-cloak x-transition.opacity.duration.200ms
+                         class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+                         @click.self="open = false" @keydown.escape.window="open = false">
+                        <form method="POST" action="/account/delete" class="w-full max-w-md p-6 rounded-2xl border shadow-lg flex flex-col gap-4"
+                              :class="isDark ? 'bg-neutral-900 border-neutral-800 text-white' : 'bg-neutral-100 border-neutral-300 text-neutral-800'">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <p class="text-2xl font-bold">Delete your account?</p>
+                            <p :class="isDark ? 'text-neutral-400' : 'text-neutral-600'">
+                                Any subscription is cancelled, your API keys and usage history are deleted, and this email can't register again for 30 days.
+                            </p>
+                            <p class="text-red-500">This action cannot be undone.</p>
+                            <label class="flex flex-col gap-1">
+                                <span class="text-sm font-semibold">Password</span>
+                                <input type="password" name="password" required autocomplete="current-password"
+                                       class="p-2 rounded-md border shadow-sm outline-none"
+                                       :class="isDark ? 'bg-neutral-800 border-neutral-700 text-white' : 'bg-white border-neutral-300 text-black'">
+                            </label>
+                            <label class="flex flex-col gap-1">
+                                <span class="text-sm font-semibold">Type <strong>delete my account</strong> to confirm</span>
+                                <input type="text" name="confirmation" x-model="confirmText" autocomplete="off"
+                                       class="p-2 rounded-md border shadow-sm outline-none"
+                                       :class="isDark ? 'bg-neutral-800 border-neutral-700 text-white' : 'bg-white border-neutral-300 text-black'">
+                            </label>
+                            <div class="flex gap-2 *:flex-1">
+                                <button type="button" @click="open = false" class="p-2 rounded-md border cursor-pointer hover:opacity-80"
+                                        :class="isDark ? 'border-neutral-700 text-neutral-300' : 'border-neutral-300 text-neutral-700'">Cancel</button>
+                                <button type="submit" :disabled="confirmText !== 'delete my account'"
+                                        class="p-2 rounded-md bg-red-500 text-white cursor-pointer hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed">Delete account</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
 
                 <div class="h-px transition duration-150 w-full" :class='isDark ? "bg-neutral-700" : "bg-neutral-200"'></div>
