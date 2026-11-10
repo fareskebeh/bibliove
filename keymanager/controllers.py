@@ -3,7 +3,7 @@ from auth.models import User
 from flask import session, jsonify, request, render_template, flash, redirect, make_response
 from .models import ApiKey, ApiUsage
 from extensions import limiter, csrf_valid
-from payments.models import FREE_PLAN_ID
+from payments.models import Plan
 from hashlib import sha256
 import secrets
 import nemony as nm
@@ -21,8 +21,9 @@ def key_routes_init(app):
         user = User.query.filter(User.email==session.get("email")).first()
         if not user:
             return redirect("/")
-        if user.plan_id==FREE_PLAN_ID and user.key_count>=1:
-            return make_response({"message": "Only one key is available for Free plan, Upgrade to a paid plan to create more."}, 402)
+        plan = db.session.get(Plan, user.plan_id)
+        if user.key_count >= plan.max_keys:
+            return make_response({"message": f"Your {plan.name} plan allows {plan.max_keys} key{'s' if plan.max_keys != 1 else ''}. Upgrade to a paid plan to create more."}, 402)
         raw=secrets.token_urlsafe(32)
         key = ApiKey(
             key_hash= sha256(raw.encode()).hexdigest(),

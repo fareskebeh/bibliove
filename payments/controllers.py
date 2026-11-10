@@ -305,19 +305,3 @@ def payment_routes_init(app):
                 db.session.commit()
 
         return jsonify({'status': 'success'})
-
-    @app.route('/dummy-checkout', methods=['GET', 'POST'])
-    def dummy_checkout():
-        is_authenticated= session.get('email')
-        chosen_plan = session.get('chosen_plan_id')
-        result = request.form.get('result')
-        if request.method == 'GET':
-            return render_template('dummy.jinja', is_authenticated=is_authenticated)
-        elif request.method == 'POST':
-            email = session.get('pending_verification_email')
-            if result == 'success':
-                flash('Subscription bought', "success")
-                return redirect('/login')
-            else:
-                flash('Session rolled back', "warning")
-                return redirect('/login')

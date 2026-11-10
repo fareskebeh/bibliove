@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, request
 from dotenv import load_dotenv
 import os
 from core.controllers import core_routes_init
@@ -17,6 +17,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 load_dotenv()
 
 app = Flask(__name__, template_folder="auth/templates")
+app.jinja_env.autoescape = lambda name: bool(name) and name.endswith(('.jinja', '.html'))
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DB_CTX_URL")
 app.config["REMEMBER_COOKIE_SAMESITE"] = os.getenv("REMEMBER_COOKIE_SAMESITE")
 app.config["SESSION_COOKIE_SAMESITE"] = os.getenv("SESSION_COOKIE_SAMESITE")
@@ -47,14 +48,12 @@ key_routes_init(app)
 payment_routes_init(app)
 
 @app.errorhandler(429)
-def ratelimit_handler():
-    return jsonify({
-        "error": "Too many requests",
-        "message": "Rate limit exceeded. Please slow down.",
-    }), 429
-
-@app.errorhandler(429)
 def ratelimit_handler(e):
+    if request.path.startswith(('/extract', '/status')):
+        return jsonify({
+            "error": "Too many requests",
+            "message": "Rate limit exceeded. Please slow down.",
+        }), 429
     return render_template("429.jinja"), 429
 
 DEBUG=True if os.getenv("DEBUG") == 'True' else False

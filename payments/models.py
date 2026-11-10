@@ -13,6 +13,7 @@ class Plan(db.Model):
     features=db.Column(JSON)
     quota_limit=db.Column(db.Integer)
     overage_cents_per_page = db.Column(db.Float, nullable=False, default=0)
+    max_keys = db.Column(db.Integer, nullable=False, default=1)
 
     @property
     def stripe_lookup_key(self):

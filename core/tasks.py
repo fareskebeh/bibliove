@@ -5,6 +5,7 @@ from auth.models import User
 from auth.quota import apply_quota_reset
 from payments.billing import billable_pages, report_overage
 import stripe
+import logging
 from datetime import datetime, timedelta
 from uuid import uuid4
 from payments.models import OverageReport
@@ -23,6 +24,7 @@ Session = sessionmaker(bind=engine)
 PAGE_BREAK = "pagebreak_pagebreak"
 
 OVERAGE_MAX_AGE = timedelta(days=30)
+logger = logging.getLogger(__name__)
 
 
 def report_pending_overage(session, user, plan, pages_before, added):
@@ -41,7 +43,7 @@ def report_pending_overage(session, user, plan, pages_before, added):
     for report in pending:
         if now - report.created_at > OVERAGE_MAX_AGE:
             report.expired = True
-            print(f"overage report {report.id} for user {user.id} expired unsent ({report.pages} pages)")
+            logger.error("overage report %s for user %s expired unsent (%s pages)", report.id, user.id, report.pages)
             continue
         if not user.stripe_customer_id:
             continue
@@ -54,11 +56,11 @@ def report_pending_overage(session, user, plan, pages_before, added):
             else:
                 report.attempts += 1
                 report.last_error = str(e)[:255]
-                print(f"overage report {report.id} rejected for user {user.id}: {e}")
+                logger.error("overage report %s rejected for user %s: %s", report.id, user.id, e)
         except stripe.StripeError as e:
             report.attempts += 1
             report.last_error = str(e)[:255]
-            print(f"overage report {report.id} failed for user {user.id}: {e}")
+            logger.warning("overage report %s failed for user %s: %s", report.id, user.id, e)
     session.commit()
 
 
