@@ -4,14 +4,14 @@
 <div class="pt-56 flex flex-col gap-32 sm:gap-0 pb-16 sm:pb-0 sm:pt-0 **:transition-colors **:duration-150">
     <div :class="isDark ? 'text-white' : 'text-neutral-800' "
         class="p-4 h-dvh flex gap-4 flex-col sm:flex-row justify-center *:flex-1 *:p-4 sm:*:p-8 items-center">
-        <div class="space-y-8 sm:space-y-4">
+        <div class="space-y-8 sm:space-y-4 reveal" data-reveal="hero" style="transition-delay: 0ms">
             <p class="text-5xl font-black ">Turn images + PDF files to plain text with one request</p>
             <p class="text-2xl" :class="isDark ? 'text-neutral-400' : 'text-neutral-600'">My responsive RESTful API will
                 provide text extraction and OCR capabilities to your app, with a very minimal cost.</p>
             <a href="{{ '/dashboard' if is_authenticated else '/register' }}"
                 class="text-xl p-3 shadow-sm text-white bg-orange-600 rounded-xl">Get Your API Key</a>
         </div>
-        <div class="flex flex-col gap-4">
+        <div class="flex flex-col gap-4 reveal" data-reveal="hero" style="transition-delay: 180ms">
 
             <div class="flex text-xl gap-4">
                 <div :class="isDark ? 'border-neutral-700' : 'border-neutral-400' "
@@ -78,42 +78,116 @@
 
 
         </div>
-
-
-
     </div>
 
     <div class="px-6 py-16 sm:py-24 flex flex-col items-center gap-10" :class="isDark ? 'text-white' : 'text-neutral-800'">
-    <p class="text-3xl sm:text-4xl font-black text-center">It even works on images and image PDF files,<br class="hidden sm:block"> no matter the quality</p>
+        <p class="reveal text-3xl sm:text-4xl font-black text-center" style="transition-delay: 0ms">It even works on images and image PDF files,<br class="hidden sm:block"> no matter the quality</p>
 
-    <div class="w-full max-w-4xl p-6 sm:p-8 rounded-2xl border shadow-sm flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-8"
-        :class="isDark ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-neutral-300'">
-        <img src="{{ url_for('static', filename='images/lorem-img.png') }}" class="h-24 sm:h-28 w-auto rounded-md shadow-md" alt="Sample scanned page" />
+        <div class="reveal w-full max-w-4xl p-6 sm:p-8 rounded-2xl border shadow-sm flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-8"
+            style="transition-delay: 150ms"
+            :class="isDark ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-neutral-300'">
+            <img src="{{ url_for('static', filename='images/lorem-img.png') }}" class="h-24 sm:h-28 w-auto rounded-md shadow-md" alt="Sample scanned page" />
 
-        <svg class="w-8 h-8 rotate-90 sm:rotate-0 text-orange-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-        </svg>
+            <svg class="w-8 h-8 rotate-90 sm:rotate-0 text-orange-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+            </svg>
 
-        <p class="font-black text-2xl tracking-tight whitespace-nowrap" :class="isDark ? 'text-white' : 'text-black'">
-            Bibli<span class="text-orange-600">ove</span>
-        </p>
+            <p class="font-black text-2xl tracking-tight whitespace-nowrap" :class="isDark ? 'text-white' : 'text-black'">
+                Bibli<span class="text-orange-600">ove</span>
+            </p>
 
-        <svg class="w-8 h-8 rotate-90 sm:rotate-0 text-orange-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-        </svg>
+            <svg class="w-8 h-8 rotate-90 sm:rotate-0 text-orange-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+            </svg>
 
-        <div class="flex flex-col gap-1 p-4 rounded-lg border font-mono text-sm w-full sm:w-auto"
-            :class="isDark ? 'bg-neutral-950 border-neutral-800' : 'bg-neutral-50 border-neutral-300'">
-            <code :class="isDark ? 'text-gray-500' : 'text-gray-500'">{</code>
-            <div class="pl-4">
-                <code :class="isDark ? 'text-blue-400' : 'text-blue-600'">"extracted_text"</code>
-                <code :class="isDark ? 'text-gray-400' : 'text-gray-600'">:</code>
-                <code :class="isDark ? 'text-green-400' : 'text-green-600'">"LOREM IPSUM"</code>
+            <div class="flex flex-col gap-1 p-4 rounded-lg border font-mono text-sm w-full sm:w-auto"
+                :class="isDark ? 'bg-neutral-950 border-neutral-800' : 'bg-neutral-50 border-neutral-300'">
+                <code :class="isDark ? 'text-gray-500' : 'text-gray-500'">{</code>
+                <div class="pl-4">
+                    <code :class="isDark ? 'text-blue-400' : 'text-blue-600'">"extracted_text"</code>
+                    <code :class="isDark ? 'text-gray-400' : 'text-gray-600'">:</code>
+                    <code :class="isDark ? 'text-green-400' : 'text-green-600'">"LOREM IPSUM"</code>
+                </div>
+                <code :class="isDark ? 'text-gray-500' : 'text-gray-500'">}</code>
             </div>
-            <code :class="isDark ? 'text-gray-500' : 'text-gray-500'">}</code>
         </div>
     </div>
-</div>
+
+    <div class="px-6 py-16 sm:py-24 flex flex-col items-center gap-10" :class="isDark ? 'text-white' : 'text-neutral-800'">
+        <p class="reveal text-3xl sm:text-4xl font-black text-center" style="transition-delay: 0ms">Three steps from PDF to text</p>
+
+        <div class="w-full max-w-5xl grid gap-6 sm:grid-cols-3">
+            {% set steps = [
+                ("Create a key", "Sign up and generate an API key from your dashboard. Free accounts get one."),
+                ("Send the PDF", "POST the file with your key in the Authorization header. You get a job ID straight back."),
+                ("Read the text", "Poll the job and receive every page as clean text, OCR included for scanned pages."),
+            ] %}
+            {% for title, body in steps %}
+                <div class="reveal p-6 rounded-2xl border shadow-sm flex flex-col gap-4"
+                    data-reveal="card"
+                    style="transition-delay: {{ loop.index0 * 140 }}ms"
+                    :class="isDark ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-neutral-300'">
+                    <div class="w-10 h-10 rounded-full bg-orange-600 text-white font-bold flex items-center justify-center">{{ loop.index }}</div>
+                    <p class="text-xl font-bold">{{ title }}</p>
+                    <p :class="isDark ? 'text-neutral-400' : 'text-neutral-600'">{{ body }}</p>
+                </div>
+            {% endfor %}
+        </div>
+
+        <a href="{{ '/dashboard' if is_authenticated else '/register' }}"
+            class="reveal text-xl p-3 shadow-sm text-white bg-orange-600 rounded-xl hover:opacity-90"
+            style="transition-delay: 420ms">Get Your API Key</a>
+    </div>
 
 </div>
+
+<style>
+    .reveal {
+        opacity: 0;
+        transform: translateY(28px);
+        transition-property: opacity, transform;
+        transition-duration: 0.8s;
+        transition-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1);
+    }
+    .reveal.is-visible {
+        opacity: 1;
+        transform: none;
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .reveal {
+            opacity: 1;
+            transform: none;
+            transition: none;
+        }
+    }
+</style>
+
+<script>
+    (function () {
+        const items = Array.from(document.querySelectorAll('.reveal'));
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        if (reduceMotion || !('IntersectionObserver' in window)) {
+            items.forEach((item) => item.classList.add('is-visible'));
+            return;
+        }
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.15 });
+
+        items.forEach((item) => {
+            if (item.dataset.reveal === 'hero') {
+                requestAnimationFrame(() => requestAnimationFrame(() => item.classList.add('is-visible')));
+            } else {
+                observer.observe(item);
+            }
+        });
+    })();
+</script>
 {% endblock %}
