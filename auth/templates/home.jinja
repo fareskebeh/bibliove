@@ -83,44 +83,34 @@
 
     </div>
 
-    <div class="p-12 h-dvh flex flex-col gap-20" :class="isDark ? 'text-white' : 'text-neutral-800'">
-    <p class="text-4xl font-black">It even works on images and image PDF files,<br> no matter the quality</p>
+    <div class="px-6 py-16 sm:py-24 flex flex-col items-center gap-10" :class="isDark ? 'text-white' : 'text-neutral-800'">
+    <p class="text-3xl sm:text-4xl font-black text-center">It even works on images and image PDF files,<br class="hidden sm:block"> no matter the quality</p>
 
-    <div class="w-full flex justify-center">
-        <div class="flex gap-8 items-center flex-col sm:flex-row">
-            <img src="{{ url_for('static', filename='images/lorem-img.png') }}" class="h-32 rounded-md shadow-md w-auto" />
+    <div class="w-full max-w-4xl p-6 sm:p-8 rounded-2xl border shadow-sm flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-8"
+        :class="isDark ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-neutral-300'">
+        <img src="{{ url_for('static', filename='images/lorem-img.png') }}" class="h-24 sm:h-28 w-auto rounded-md shadow-md" alt="Sample scanned page" />
 
-            <div class="flex items-center gap-2">
-                <svg class="w-12 h-12 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
+        <svg class="w-8 h-8 rotate-90 sm:rotate-0 text-orange-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+        </svg>
+
+        <p class="font-black text-2xl tracking-tight whitespace-nowrap" :class="isDark ? 'text-white' : 'text-black'">
+            Bibli<span class="text-orange-600">ove</span>
+        </p>
+
+        <svg class="w-8 h-8 rotate-90 sm:rotate-0 text-orange-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+        </svg>
+
+        <div class="flex flex-col gap-1 p-4 rounded-lg border font-mono text-sm w-full sm:w-auto"
+            :class="isDark ? 'bg-neutral-950 border-neutral-800' : 'bg-neutral-50 border-neutral-300'">
+            <code :class="isDark ? 'text-gray-500' : 'text-gray-500'">{</code>
+            <div class="pl-4">
+                <code :class="isDark ? 'text-blue-400' : 'text-blue-600'">"extracted_text"</code>
+                <code :class="isDark ? 'text-gray-400' : 'text-gray-600'">:</code>
+                <code :class="isDark ? 'text-green-400' : 'text-green-600'">"LOREM IPSUM"</code>
             </div>
-
-            <p class="font-black text-3xl tracking-tight transition-colors duration-150 whitespace-nowrap"
-                :class="isDark ? 'text-white' : 'text-black'">
-                Bibli<span class="text-orange-600">ove</span>
-            </p>
-
-            <div class="flex items-center gap-2">
-                <svg class="w-12 h-12 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
-            </div>
-
-            <div class="flex flex-col gap-1 p-2 rounded-lg border font-mono text-sm shadow-sm"
-                :class="isDark ? 'bg-neutral-900 border-neutral-700' : 'bg-neutral-50 border-neutral-300'">
-                <div>
-                    <code :class="isDark ? 'text-gray-400' : 'text-gray-400'">...</code>
-                </div>
-                <div class="pl-4">
-                    <code :class="isDark ? 'text-blue-400' : 'text-blue-600'">"extracted_text"</code>
-                    <code :class="isDark ? 'text-gray-400' : 'text-gray-600'">:</code>
-                    <code :class="isDark ? 'text-green-400' : 'text-green-600'">"LOREM IPSUM"</code>
-                </div>
-                <div>
-                    <code :class="isDark ? 'text-gray-400' : 'text-gray-400'">...</code>
-                </div>
-            </div>
+            <code :class="isDark ? 'text-gray-500' : 'text-gray-500'">}</code>
         </div>
     </div>
 </div>
