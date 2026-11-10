@@ -188,10 +188,12 @@ def auth_routes_init(app):
                 moments_by_key[key_id].append(created_at)
         series = usage_series(moments_by_key)
         usage_keys = [{"id": k.id, "name": k.name, "series": series[k.id]} for k in keys]
+        recent_rows = db.session.query(ApiUsage.created_at, ApiKey.name).join(ApiKey, ApiKey.id == ApiUsage.key_id).filter(ApiUsage.user_id==user.id).order_by(ApiUsage.created_at.desc()).limit(10).all()
+        recent_requests = [{"key_name": name, "created_at": created_at} for created_at, name in recent_rows]
         plan = db.session.get(Plan, user.plan_id)
         is_free = user.plan_id == FREE_PLAN_ID
         can_create = not is_free or user.key_count < 1
-        return render_template("dashboard.jinja", is_authenticated=is_authenticated, email=session.get("email"), user_keys=keys, user=user, plan=plan, is_free=is_free, can_create=can_create, usage_keys=usage_keys)
+        return render_template("dashboard.jinja", is_authenticated=is_authenticated, email=session.get("email"), user_keys=keys, user=user, plan=plan, is_free=is_free, can_create=can_create, usage_keys=usage_keys, recent_requests=recent_requests)
 
     @app.route('/pricing')
     @limiter.limit('100/minute')

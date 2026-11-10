@@ -64,6 +64,38 @@
                     {% endif %}
                 </a>
             </div>
+            <section class="pt-6 flex flex-col gap-3">
+                <p class="font-black text-2xl">Recent requests</p>
+                {% if recent_requests %}
+                <ul class="flex flex-col gap-2 max-h-72 overflow-y-auto pr-1">
+                    {% for item in recent_requests %}
+                    <li class="flex items-center justify-between gap-3 p-3 rounded-lg shadow-sm text-sm"
+                        :class="isDark ? 'bg-neutral-800' : 'bg-white'">
+                        <code>{{ item.key_name|e }}</code>
+                        <span :class="isDark ? 'text-neutral-400' : 'text-neutral-500'">{{ item.created_at.strftime('%b %d, %H:%M') }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p :class="isDark ? 'text-neutral-400' : 'text-neutral-600'">No requests yet. Accepted uploads will show up here.</p>
+                {% endif %}
+            </section>
+
+            <section class="pt-6 flex flex-col gap-3">
+                <p class="font-black text-2xl">Quick start</p>
+                <p :class="isDark ? 'text-neutral-400' : 'text-neutral-600'">Replace <code>YOUR_API_KEY</code> with the key you saved when you created it.</p>
+                <div class="rounded-lg overflow-hidden shadow-sm border" :class="isDark ? 'border-neutral-800' : 'border-neutral-300'">
+                    <div class="flex items-center justify-between px-3 py-2 bg-neutral-800 text-neutral-300 text-xs">
+                        <span>curl</span>
+                        <button type="button" id="quickstart-copy" class="px-2 py-1 rounded hover:bg-neutral-700 cursor-pointer transition duration-150">Copy</button>
+                    </div>
+                    <pre id="quickstart-code" class="p-4 bg-neutral-900 text-neutral-100 text-sm font-mono overflow-x-auto"><code>curl -X POST "{{ request.host_url.rstrip('/')|e }}/extract" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -F "pdf=@report.pdf"</code></pre>
+                </div>
+                <a href="/docs" class="text-orange-600 hover:opacity-80 transition duration-150">Full API documentation →</a>
+            </section>
+
         </div>
 
         <div class="sm:pt-24 p-8 min-w-0" :class="isDark ? 'text-white' : 'text-neutral-800'">
@@ -432,6 +464,46 @@
         scopeSelect.addEventListener('change', refresh);
         monthSelect.addEventListener('change', refresh);
         refresh();
+    })();
+</script>
+
+<script>
+    (function () {
+        const button = document.getElementById('quickstart-copy');
+        const code = document.getElementById('quickstart-code');
+        if (!button || !code) {
+            return;
+        }
+        function fallbackCopy(text) {
+            const area = document.createElement('textarea');
+            area.value = text;
+            area.setAttribute('readonly', '');
+            area.style.position = 'fixed';
+            area.style.opacity = '0';
+            document.body.append(area);
+            area.select();
+            const copied = document.execCommand('copy');
+            area.remove();
+            return copied;
+        }
+
+        button.addEventListener('click', async () => {
+            const text = code.textContent;
+            let copied = false;
+            try {
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(text);
+                    copied = true;
+                }
+            } catch (error) {
+                copied = false;
+            }
+            if (!copied) {
+                copied = fallbackCopy(text);
+            }
+            button.textContent = copied ? 'Copied' : 'Copy failed';
+            setTimeout(() => { button.textContent = 'Copy'; }, 1500);
+        });
     })();
 </script>
 {% endblock %}
