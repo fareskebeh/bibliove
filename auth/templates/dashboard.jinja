@@ -29,8 +29,8 @@
         </style>
     </head>
 
-    <div class="flex *:flex-1 transition-colors duration-150 h-dvh flex-col sm:flex-row">
-        <div :class="isDark ? 'text-white transition duration-150' : 'text-neutral-800'" class="p-8 pt-24 space-y-2">
+    <div class="flex *:flex-1 transition-colors duration-150 flex-col sm:flex-row  pt-12">
+        <div :class="isDark ? 'text-white transition duration-150' : 'text-neutral-800'" class="p-8 space-y-2">
             <p class="font-black text-3xl">Manage Your API Keys</p>
             <span :class="isDark ? 'text-neutral-400' : 'text-neutral-600'" class="text-xl">{{ email }}</span>
             <span class="{{ 'text-green-500 bg-green-500/20' if plan.name == 'Free' else ' bg-indigo-500/20 text-indigo-500' if plan.name == 'Starter' else 'text-purple-500 bg-purple-500/20' if plan.name == 'Pro' else 'text-orange-600 bg-orange-500/20' }} p-2 text-sm rounded-3xl font-bold">{{ plan.name }}</span>
@@ -109,7 +109,7 @@
         <div aria-hidden="true" class="sm:hidden mx-8 border-t border-dashed" :class="isDark ? 'border-neutral-700' : 'border-neutral-300'" style="flex: none"></div>
         <div aria-hidden="true" class="hidden sm:block self-stretch my-8 border-l border-dashed" :class="isDark ? 'border-neutral-700' : 'border-neutral-300'" style="flex: none"></div>
 
-        <div class="sm:pt-24 p-8 min-w-0" :class="isDark ? 'text-white' : 'text-neutral-800'">
+        <div class="p-8 min-w-0" :class="isDark ? 'text-white' : 'text-neutral-800'">
             <p class="font-black text-3xl">Monitor Usage</p>
                 
             <div class="py-4">
@@ -170,7 +170,6 @@
                         <p id="usage-tooltip-count" class="text-base font-bold text-orange-600"></p>
                     </div>
                 </div>
-                <p class="text-xs" :class="isDark ? 'text-neutral-500' : 'text-neutral-500'">Scroll sideways for earlier periods. Each point counts accepted requests in one period: an hour, a day or a month, depending on the scope.</p>
                 {% else %}
                 <p :class="isDark ? 'text-neutral-400' : 'text-neutral-600'">Create a key to start recording requests.</p>
                 {% endif %}
@@ -181,7 +180,7 @@
                     <p class="text-2xl font-black" :class="isDark ? 'text-white' : 'text-black'">{{ overage_pages }} <span class="text-base font-medium">pages</span> · ${{ "%.3f"|format(overage_amount) }}</p>
                     <p class="text-sm" :class="isDark ? 'text-neutral-400' : 'text-neutral-600'">${{ "%.3f"|format(plan.overage_cents_per_page / 100) }} per page above your {{ plan.quota_limit }}-page allowance, billed with your subscription.</p>
                     {% else %}
-                    <p class="text-sm" :class="isDark ? 'text-neutral-400' : 'text-neutral-600'">The Free plan stops at its allowance. Upgrade to process pages beyond it.</p>
+                    <p class="text-sm" :class="isDark ? 'text-neutral-400' : 'text-neutral-600'">Upgrade your plan to process pages beyond allowed quota.</p>
                     {% endif %}
                 </div>
             </div>
