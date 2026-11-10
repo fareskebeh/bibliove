@@ -2,6 +2,8 @@ import pymupdf
 from PIL import Image
 import pytesseract
 from auth.models import User
+from auth.quota import apply_quota_reset
+from datetime import datetime
 from payments.models import Plan, FREE_PLAN_ID
 from keymanager.models import ApiUsage
 from sqlalchemy import create_engine
@@ -27,6 +29,8 @@ def extract_text(fp, user_id, usage_id=None):
                 return {"error": "User not found"}
             
             user_plan = session.query(Plan).get(user.plan_id)
+            if apply_quota_reset(user):
+                session.commit()
             remaining=user_plan.quota_limit - user.master_quota
             status=""
             pages_to_process=0

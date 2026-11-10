@@ -11,6 +11,7 @@ from keymanager.models import ApiKey, ApiUsage
 import stripe
 from auth.accounts import record_deletion, reentry_available_on
 from payments.billing import close_billing_for_user
+from auth.quota import apply_quota_reset
 from keymanager.usage import scope_edges, usage_series
 from hashlib import sha256
 import secrets
@@ -197,6 +198,8 @@ def auth_routes_init(app):
         if not user:
             session.clear()
             return redirect("/")
+        if apply_quota_reset(user):
+            db.session.commit()
         user_keys = ApiKey.query.filter(ApiKey.user_id==user.id)
         keys = user_keys.all()
         entries_by_key = {k.id: [] for k in keys}
