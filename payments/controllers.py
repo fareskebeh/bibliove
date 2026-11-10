@@ -232,6 +232,7 @@ def payment_routes_init(app):
         return redirect(portal.url, code=303)
 
     @app.route('/webhook', methods=['POST'])
+    @limiter.exempt
     def stripe_webhook():
         secret = os.getenv('STRIPE_WEBHOOK_SECRET')
         if not secret:

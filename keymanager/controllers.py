@@ -2,6 +2,7 @@ from db.extensions import db
 from auth.models import User
 from flask import session, jsonify, request, render_template, flash, redirect, make_response
 from .models import ApiKey, ApiUsage
+from extensions import limiter
 from payments.models import FREE_PLAN_ID
 from hashlib import sha256
 import secrets
@@ -10,6 +11,7 @@ import nemony as nm
 def key_routes_init(app):
     
     @app.route("/count/<int:user_id>")
+    @limiter.limit('30/minute')
     def count_keys_for_user(user_id):
         user = User.query.get(user_id)
         if user is None:
@@ -17,6 +19,7 @@ def key_routes_init(app):
         return str(user.key_count)
     
     @app.route("/keys/create", methods=["POST", "GET"])
+    @limiter.limit('20/minute')
     def create_key():
         is_authenticated=True if session.get("email") else False 
         if not is_authenticated:
@@ -37,6 +40,7 @@ def key_routes_init(app):
         return render_template('create_key.jinja', name=key.name if key else '', raw=raw, is_authenticated=is_authenticated)
     
     @app.route('/keys/delete', methods=["POST"])
+    @limiter.limit('20/minute')
     def delete_key():
         is_authenticated = True if session.get("email") else False 
         if not is_authenticated:

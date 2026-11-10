@@ -189,7 +189,7 @@ pages = body["result"]["text"]{% endraw %}</code></pre>
             <ul class="flex flex-col gap-3 list-disc pl-5" :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">
                 <li><span class="font-semibold">Free:</span> one API key and 50 pages in total for the account. The allowance is lifetime and does not reset. Once a document goes past what's left, only the remaining pages are processed and the result's status is <span class="font-mono">partial</span>. After that, uploads return a result with status <span class="font-mono">error</span> and code <span class="font-mono">429</span>.</li>
                 <li><span class="font-semibold">Paid plans:</span> the full document is processed. See <a href="/pricing" class="text-orange-600 hover:opacity-80">Pricing</a> for plan details.</li>
-                <li><span class="font-semibold">Request rate:</span> each IP address may make 50 requests per hour and 200 per day across all endpoints. Going over returns HTTP 429.</li>
+                <li><span class="font-semibold">Request rate:</span> uploads to <span class="font-mono">/extract</span> are limited to 60 per minute and 1,000 per hour per IP address, and status checks to 600 per minute. Other endpoints share a limit of 300 per minute. Going over returns HTTP 429.</li>
             </ul>
         </section>
 

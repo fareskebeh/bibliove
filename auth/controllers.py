@@ -37,8 +37,7 @@ def auth_routes_init(app):
         return redirect("/home")
     
     @app.route('/register', methods=['GET', 'POST'])
-    #change before I quit
-    @limiter.limit('10000/hour')
+    @limiter.limit('10/hour')
     def register():
         #  get the plan they chose ln #42
         chosen_plan = request.args.get('plan')
@@ -94,7 +93,7 @@ def auth_routes_init(app):
         return render_template('register.jinja', is_authenticated=is_authenticated)
 
     @app.route("/verify", methods=["GET", "POST"])
-    @limiter.limit('10/hour')
+    @limiter.limit('20/hour')
     def verify_email():
         email = session.get("pending_verification_email")
         if not email:
@@ -126,7 +125,7 @@ def auth_routes_init(app):
         return render_template("verify.jinja", is_authenticated=True if email else False)
 
     @app.route('/login', methods=['GET', 'POST'])
-    @limiter.limit('10/hour')
+    @limiter.limit('10/minute')
     def login():
         is_authenticated = True if session.get("email") else False
         if is_authenticated:
@@ -232,7 +231,7 @@ def auth_routes_init(app):
         return render_template('forgot-password.jinja', is_authenticated=is_authenticated)
     
     @app.route('/reset-password', methods=['GET', 'POST'])
-    @limiter.limit('3/hour')
+    @limiter.limit('10/hour')
     def reset_password():
         is_authenticated = True if session.get("email") else False
         

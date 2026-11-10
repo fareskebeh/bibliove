@@ -1,4 +1,5 @@
 from keymanager.models import ApiKey, ApiUsage
+from extensions import limiter
 from db.extensions import db
 from hashlib import sha256
 from flask import request, jsonify, make_response, render_template, session
@@ -13,6 +14,7 @@ from rq.exceptions import NoSuchJobError
 def core_routes_init(app):
 
     @app.route("/extract", methods=["POST"])
+    @limiter.limit('60/minute;1000/hour')
     def extract_head():
         request_file=request.files.get("pdf")
         if not request_file:
@@ -52,6 +54,7 @@ def core_routes_init(app):
             return make_response("Unauthorized", 401)
         
     @app.route('/status/<job_id>', methods=['GET'])
+    @limiter.limit('600/minute')
     def ocr_status(job_id):
         try:
             job = Job.fetch(job_id, connection=rd)
