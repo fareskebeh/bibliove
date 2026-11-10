@@ -67,7 +67,7 @@
                      :class="isDark ? 'border-neutral-800 text-neutral-300' : 'border-neutral-300 text-neutral-700'">
                     <p>Need a lower plan or want to cancel?</p>
                     <form action="/billing-portal" method="POST">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="p-2 px-4 rounded-lg border cursor-pointer hover:opacity-80 transition duration-150"
                                 :class="isDark ? 'border-neutral-700' : 'border-neutral-300'">Manage billing</button>
                     </form>
@@ -131,7 +131,7 @@
 <script src="https://js.stripe.com/v3/"></script>
 <script>
     (function () {
-        const csrfToken = {{ csrf_token|tojson }};
+        const csrfToken = {{ csrf_token()|tojson }};
         const publishableKey = {{ stripe_publishable_key|tojson }};
         const inputs = Array.from(document.querySelectorAll('.js-plan-input'));
         if (!inputs.length) {

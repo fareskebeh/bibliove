@@ -89,7 +89,6 @@ def payment_routes_init(app):
             user=user,
             plans=plans,
             current_plan=current,
-            csrf_token=generate_csrf(),
             stripe_publishable_key=app.config['STRIPE_PUBLISHABLE_KEY'],
         ))
 
