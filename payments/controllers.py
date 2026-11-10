@@ -5,6 +5,7 @@ from wtforms.validators import ValidationError
 import os
 
 from auth.models import User
+from auth.quota import reset_paid_cycle
 from db.extensions import db
 from extensions import limiter
 from payments.models import Plan
@@ -48,9 +49,32 @@ def payment_routes_init(app):
         current = db.session.get(Plan, user.plan_id)
         if current and plan.price_cents <= current.price_cents and plan.id != user.plan_id:
             return False
+        if plan.id != user.plan_id and plan.price_cents > 0:
+            reset_paid_cycle(user)
         user.plan_id = plan.id
         db.session.commit()
         return True
+
+    def plan_for_base_price(lookup_key):
+        for plan in Plan.query.all():
+            if plan.stripe_lookup_key == lookup_key:
+                return plan
+        return None
+
+    def align_overage_item(sub, items, plan):
+        expected = plan.stripe_overage_lookup_key
+        if any((item['price'].get('lookup_key') or '') == expected for item in items):
+            return
+        overage_items = [item['id'] for item in items if (item['price'].get('lookup_key') or '').endswith('_overage')]
+        prices = client.v1.prices.list(params={'lookup_keys': [expected], 'limit': 1}).data
+        if not prices:
+            app.logger.error("Overage price %s is missing; cannot align subscription %s", expected, sub['id'])
+            return
+        client.v1.subscriptions.update(sub['id'], params={
+            'items': [{'id': item_id, 'deleted': True} for item_id in overage_items] + [{'price': prices[0].id}],
+            'proration_behavior': 'none',
+            'metadata': {'user_id': str(sub['metadata']['user_id']), 'plan_id': str(plan.id)},
+        })
 
     def private_page(html):
         response = make_response(html)
@@ -253,12 +277,25 @@ def payment_routes_init(app):
         event_type = event['type']
 
         if event_type in ('customer.subscription.created', 'customer.subscription.updated'):
-            metadata = obj.get('metadata', {})
-            if obj.get('status') in ACTIVE_STATUSES and metadata.get('user_id') and metadata.get('plan_id'):
+            metadata = obj.get('metadata', {}) or {}
+            user = User.query.filter_by(stripe_customer_id=obj.get('customer')).first()
+            if user is None and metadata.get('user_id'):
                 user = db.session.get(User, int(metadata['user_id']))
-                plan = db.session.get(Plan, int(metadata['plan_id']))
-                if user and plan:
-                    move_user_to_plan(user, plan)
+            items = (obj.get('items') or {}).get('data', [])
+            base_plan = None
+            for item in items:
+                base_plan = plan_for_base_price(item['price'].get('lookup_key') or '')
+                if base_plan:
+                    break
+            if user and base_plan and obj.get('status') in ACTIVE_STATUSES:
+                align_overage_item(obj, items, base_plan)
+                move_user_to_plan(user, base_plan)
+
+        elif event_type == 'invoice.paid' and obj.get('billing_reason') == 'subscription_cycle':
+            user = User.query.filter_by(stripe_customer_id=obj.get('customer')).first()
+            if user:
+                reset_paid_cycle(user)
+                db.session.commit()
 
         elif event_type == 'customer.subscription.deleted':
             user_id = obj.get('metadata', {}).get('user_id')

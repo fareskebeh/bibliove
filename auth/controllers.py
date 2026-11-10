@@ -198,7 +198,7 @@ def auth_routes_init(app):
         if not user:
             session.clear()
             return redirect("/")
-        if apply_quota_reset(user):
+        if apply_quota_reset(user, user.plan_id == FREE_PLAN_ID):
             db.session.commit()
         user_keys = ApiKey.query.filter(ApiKey.user_id==user.id)
         keys = user_keys.all()

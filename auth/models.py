@@ -15,7 +15,6 @@ class User(db.Model):
     master_quota = db.Column(db.Integer, default=0)
     quota_reset_at = db.Column(db.DateTime, nullable=True)
     stripe_customer_id = db.Column(db.String(64), nullable=True)
-    unreported_overage_pages = db.Column(db.Integer, nullable=False, default=0)
     billing_start = db.Column(db.DateTime, default=datetime.now)
     @hybrid_property
     def key_count(self):

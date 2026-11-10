@@ -21,3 +21,16 @@ class Plan(db.Model):
     @property
     def stripe_overage_lookup_key(self):
         return f"bibliove_{self.name.lower()}_overage"
+
+
+class OverageReport(db.Model):
+    __tablename__ = 'overage_reports'
+
+    id = db.Column(db.String(36), primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    pages = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False)
+    sent_at = db.Column(db.DateTime, nullable=True)
+    attempts = db.Column(db.Integer, nullable=False, default=0)
+    last_error = db.Column(db.String(255), nullable=True)
+    expired = db.Column(db.Boolean, nullable=False, default=False)
