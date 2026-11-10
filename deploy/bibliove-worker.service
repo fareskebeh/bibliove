@@ -1,0 +1,13 @@
+[Unit]
+Description=Bibliove OCR worker (RQ)
+After=network.target redis-server.service
+
+[Service]
+WorkingDirectory=/opt/bibliove
+EnvironmentFile=/opt/bibliove/.env
+ExecStart=/opt/bibliove/venv/bin/python -m core.workers
+Restart=always
+User=bibliove
+
+[Install]
+WantedBy=multi-user.target

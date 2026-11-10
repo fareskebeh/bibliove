@@ -171,6 +171,9 @@
                     </div>
                 </div>
                 <p class="text-xs" :class="isDark ? 'text-neutral-500' : 'text-neutral-500'">Scroll sideways for earlier periods. Each point counts accepted requests in one period: an hour, a day or a month, depending on the scope.</p>
+                {% else %}
+                <p :class="isDark ? 'text-neutral-400' : 'text-neutral-600'">Create a key to start recording requests.</p>
+                {% endif %}
                 <div class="p-4 rounded-xl border shadow-sm flex flex-col gap-1 transition-colors duration-150"
                      :class="isDark ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-neutral-300'">
                     <p class="text-xs uppercase tracking-widest" :class="isDark ? 'text-neutral-500' : 'text-neutral-500'">Overage this period</p>
@@ -181,9 +184,6 @@
                     <p class="text-sm" :class="isDark ? 'text-neutral-400' : 'text-neutral-600'">The Free plan stops at its allowance. Upgrade to process pages beyond it.</p>
                     {% endif %}
                 </div>
-                {% else %}
-                <p :class="isDark ? 'text-neutral-400' : 'text-neutral-600'">Create a key to start recording requests.</p>
-                {% endif %}
             </div>
         </div>
     </div>
