@@ -128,6 +128,14 @@
                         </select>
                     </label>
                     <label class="flex flex-col gap-1 w-full sm:w-auto sm:min-w-[11rem]">
+                        <span class="text-sm font-semibold" :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">Metric</span>
+                        <select id="usage-metric" class="p-2 rounded-lg border shadow-sm outline-none transition duration-150"
+                                :class="isDark ? 'bg-neutral-800 border-neutral-700 text-white' : 'bg-white border-neutral-300 text-black'">
+                            <option value="counts" selected>Requests</option>
+                            <option value="pages">Pages scanned</option>
+                        </select>
+                    </label>
+                    <label class="flex flex-col gap-1 w-full sm:w-auto sm:min-w-[11rem]">
                         <span class="text-sm font-semibold" :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">Scope</span>
                         <select id="usage-scope" class="p-2 rounded-lg border shadow-sm outline-none transition duration-150"
                                 :class="isDark ? 'bg-neutral-800 border-neutral-700 text-white' : 'bg-white border-neutral-300 text-black'">
@@ -215,6 +223,7 @@
         }
 
         const scopeSelect = document.getElementById('usage-scope');
+        const metricSelect = document.getElementById('usage-metric');
         const monthField = document.getElementById('usage-month-field');
         const monthSelect = document.getElementById('usage-month');
         const scroller = document.getElementById('usage-scroll');
@@ -283,6 +292,7 @@
         }
 
         let activePoints = [];
+        let activeUnit = 'request';
         let activeScope = null;
         let guide = null;
         let highlight = null;
@@ -348,7 +358,8 @@
         function draw(key, scopeName) {
             const scope = scopes[scopeName];
             const series = scopeName === 'month' ? key.series.months[Number(monthSelect.value)] : key.series[scopeName];
-            const counts = series.counts;
+            const counts = metricSelect.value === 'pages' ? series.pages : series.counts;
+            const unit = metricSelect.value === 'pages' ? 'page' : 'request';
             const edges = series.edges;
             const max = Math.max(1, ...counts);
             const step = scope.step;
@@ -398,11 +409,12 @@
 
             activePoints = points;
             activeScope = scope;
+            activeUnit = unit;
             hideTooltip();
 
             const total = counts.reduce((sum, count) => sum + count, 0);
             const period = scopeName === 'month' ? 'in ' + monthTitle(series) : scope.window;
-            totalLabel.textContent = total + (total === 1 ? ' request' : ' requests') + ' ' + period;
+            totalLabel.textContent = total + ' ' + unit + (total === 1 ? '' : 's') + ' ' + period;
             scroller.scrollLeft = scroller.scrollWidth;
         }
 
@@ -424,7 +436,7 @@
             }
 
             tooltipWhen.textContent = activeScope.full(point.start);
-            tooltipCount.textContent = point.count + (point.count === 1 ? ' request' : ' requests');
+            tooltipCount.textContent = point.count + ' ' + activeUnit + (point.count === 1 ? '' : 's');
             tooltip.classList.remove('hidden');
 
             const frameRect = frame.getBoundingClientRect();
@@ -465,6 +477,7 @@
         scroller.addEventListener('scroll', hideTooltip, { passive: true });
         keySelect.addEventListener('change', refresh);
         scopeSelect.addEventListener('change', refresh);
+        metricSelect.addEventListener('change', refresh);
         monthSelect.addEventListener('change', refresh);
         refresh();
     })();

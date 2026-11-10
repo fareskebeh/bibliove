@@ -26,34 +26,33 @@ def month_edges(now):
     return months
 
 
-def bucket_counts(moments, edges):
-    counts = [0] * (len(edges) - 1)
-    for moment in moments:
+def bucket(entries, edges):
+    requests = [0] * (len(edges) - 1)
+    pages = [0] * (len(edges) - 1)
+    for moment, page_count in entries:
         index = bisect_right(edges, moment) - 1
-        if 0 <= index < len(counts):
-            counts[index] += 1
-    return counts
+        if 0 <= index < len(requests):
+            requests[index] += 1
+            pages[index] += page_count or 0
+    return requests, pages
 
 
-def usage_series(moments_by_key, now=None):
+def _series(entries, edges):
+    requests, pages = bucket(entries, edges)
+    return {
+        'edges': [int(edge.timestamp() * 1000) for edge in edges],
+        'counts': requests,
+        'pages': pages,
+    }
+
+
+def usage_series(entries_by_key, now=None):
     now = now or datetime.now()
     edges = scope_edges(now)
     months = month_edges(now)
     result = {}
-    for key_id, moments in moments_by_key.items():
-        series = {
-            scope: {
-                'edges': [int(edge.timestamp() * 1000) for edge in scope_edge],
-                'counts': bucket_counts(moments, scope_edge),
-            }
-            for scope, scope_edge in edges.items()
-        }
-        series['months'] = [
-            {
-                'edges': [int(edge.timestamp() * 1000) for edge in month_edge],
-                'counts': bucket_counts(moments, month_edge),
-            }
-            for month_edge in months
-        ]
+    for key_id, entries in entries_by_key.items():
+        series = {scope: _series(entries, scope_edge) for scope, scope_edge in edges.items()}
+        series['months'] = [_series(entries, month_edge) for month_edge in months]
         result[key_id] = series
     return result

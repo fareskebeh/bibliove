@@ -28,7 +28,8 @@ def core_routes_init(app):
             query_hash= str(sha256(key.encode()).hexdigest())
             match=ApiKey.query.filter(ApiKey.key_hash==query_hash).first()
             if match:
-                db.session.add(ApiUsage(key_id=match.id, user_id=match.user_id))
+                usage = ApiUsage(key_id=match.id, user_id=match.user_id)
+                db.session.add(usage)
                 db.session.commit()
                 job_id=uuid4().hex
                 temp_path = f"/tmp/{job_id}.pdf"
@@ -37,7 +38,8 @@ def core_routes_init(app):
                 job = ocr_queue.enqueue(
                     extract_text,
                     temp_path,
-                    match.user_id
+                    match.user_id,
+                    usage.id
                 )
                 return {
                     "job_id": job.id,

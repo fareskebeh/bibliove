@@ -3,6 +3,7 @@ from PIL import Image
 import pytesseract
 from auth.models import User
 from payments.models import Plan, FREE_PLAN_ID
+from keymanager.models import ApiUsage
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import os
@@ -15,7 +16,7 @@ Session = sessionmaker(bind=engine)
 
 PAGE_BREAK = "pagebreak_pagebreak"
 
-def extract_text(fp, user_id):
+def extract_text(fp, user_id, usage_id=None):
     session = Session()
     try:
         with open(fp, 'rb') as f:
@@ -59,6 +60,8 @@ def extract_text(fp, user_id):
                             text += ocr_text + PAGE_BREAK
                             processed+=1
                 user.master_quota += processed
+                if usage_id is not None:
+                    session.query(ApiUsage).filter(ApiUsage.id == usage_id).update({"pages": processed})
                 session.commit()
             except Exception as e:
                 status="error"

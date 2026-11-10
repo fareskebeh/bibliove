@@ -181,12 +181,12 @@ def auth_routes_init(app):
             return redirect("/")
         user_keys = ApiKey.query.filter(ApiKey.user_id==user.id)
         keys = user_keys.all()
-        moments_by_key = {k.id: [] for k in keys}
+        entries_by_key = {k.id: [] for k in keys}
         year_start = scope_edges(datetime.now())['year'][0]
-        for key_id, created_at in db.session.query(ApiUsage.key_id, ApiUsage.created_at).filter(ApiUsage.user_id==user.id, ApiUsage.created_at>=year_start).all():
-            if key_id in moments_by_key:
-                moments_by_key[key_id].append(created_at)
-        series = usage_series(moments_by_key)
+        for key_id, created_at, pages in db.session.query(ApiUsage.key_id, ApiUsage.created_at, ApiUsage.pages).filter(ApiUsage.user_id==user.id, ApiUsage.created_at>=year_start).all():
+            if key_id in entries_by_key:
+                entries_by_key[key_id].append((created_at, pages))
+        series = usage_series(entries_by_key)
         usage_keys = [{"id": k.id, "name": k.name, "series": series[k.id]} for k in keys]
         recent_rows = db.session.query(ApiUsage.created_at, ApiKey.name).join(ApiKey, ApiKey.id == ApiUsage.key_id).filter(ApiUsage.user_id==user.id).order_by(ApiUsage.created_at.desc()).limit(10).all()
         recent_requests = [{"key_name": name, "created_at": created_at} for created_at, name in recent_rows]
