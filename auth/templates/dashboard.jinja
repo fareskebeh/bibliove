@@ -30,7 +30,7 @@
     </head>
 
     <div class="flex *:flex-1 transition-colors duration-150 h-dvh flex-col sm:flex-row">
-        <div :class="isDark ? 'text-white border-neutral-800 transition duration-150' : 'text-neutral-800 border-neutral-300'" class="sm:border-r border-b p-8 pt-24 space-y-2">
+        <div :class="isDark ? 'text-white transition duration-150' : 'text-neutral-800'" class="p-8 pt-24 space-y-2">
             <p class="font-black text-3xl">Manage Your API Keys</p>
             <span :class="isDark ? 'text-neutral-400' : 'text-neutral-600'" class="text-xl">{{ email }}</span>
             <span class="{{ 'text-green-500 bg-green-500/20' if plan.name == 'Free' else ' bg-indigo-500/20 text-indigo-500' if plan.name == 'Starter' else 'text-purple-500 bg-purple-500/20' if plan.name == 'Pro' else 'text-orange-600 bg-orange-500/20' }} p-2 text-sm rounded-3xl font-bold">{{ plan.name }}</span>
@@ -100,6 +100,9 @@
             </section>
 
         </div>
+
+        <div aria-hidden="true" class="sm:hidden mx-8 border-t border-dashed" :class="isDark ? 'border-neutral-700' : 'border-neutral-300'" style="flex: none"></div>
+        <div aria-hidden="true" class="hidden sm:block self-stretch my-8 border-l border-dashed" :class="isDark ? 'border-neutral-700' : 'border-neutral-300'" style="flex: none"></div>
 
         <div class="sm:pt-24 p-8 min-w-0" :class="isDark ? 'text-white' : 'text-neutral-800'">
             <p class="font-black text-3xl">Monitor Usage</p>
