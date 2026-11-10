@@ -98,7 +98,7 @@
                      :class="isDark ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-neutral-300'">
                     <svg id="usage-chart" role="img" aria-label="Requests per hour over the last 7 days" class="block"></svg>
                 </div>
-                <p class="text-xs" :class="isDark ? 'text-neutral-500' : 'text-neutral-500'">Scroll sideways for earlier hours. Each bar is one hour of accepted requests, shown in your browser's time zone.</p>
+                <p class="text-xs" :class="isDark ? 'text-neutral-500' : 'text-neutral-500'">Scroll sideways for earlier hours. Each point is one hour of accepted requests, shown in your browser's time zone.</p>
                 {% else %}
                 <p :class="isDark ? 'text-neutral-400' : 'text-neutral-600'">Create a key to start recording requests.</p>
                 {% endif %}
@@ -207,23 +207,34 @@
                 svg.append(node('text', { x: LEFT - 10, y: y + 4, 'text-anchor': 'end', fill: colors.text, 'font-size': 11 }, String(value)));
             });
 
-            counts.forEach((count, index) => {
-                const barHeight = (count / max) * PLOT_HEIGHT;
-                const when = hourLabel(index);
-                const bar = node('rect', {
-                    x: LEFT + index * step,
-                    y: TOP + PLOT_HEIGHT - barHeight,
-                    width: BAR_WIDTH,
-                    height: barHeight,
-                    rx: 3,
-                    fill: colors.bar,
-                });
-                bar.append(node('title', {}, when.toLocaleString() + ': ' + count + (count === 1 ? ' request' : ' requests')));
-                svg.append(bar);
+            const baseline = TOP + PLOT_HEIGHT;
+            const points = counts.map((count, index) => ({
+                x: LEFT + index * step + BAR_WIDTH / 2,
+                y: baseline - (count / max) * PLOT_HEIGHT,
+                count: count,
+                when: hourLabel(index),
+                index: index,
+            }));
 
-                if (when.getHours() === 0 || index === 0) {
-                    const label = when.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-                    svg.append(node('text', { x: LEFT + index * step, y: TOP + PLOT_HEIGHT + 22, fill: colors.text, 'font-size': 11 }, label));
+            const line = points.map((point, i) => (i === 0 ? 'M' : 'L') + point.x + ' ' + point.y).join(' ');
+            const first = points[0];
+            const last = points[points.length - 1];
+            const area = line + ' L' + last.x + ' ' + baseline + ' L' + first.x + ' ' + baseline + ' Z';
+
+            svg.append(node('path', { d: area, fill: colors.bar, 'fill-opacity': 0.15, stroke: 'none' }));
+            svg.append(node('path', { d: line, fill: 'none', stroke: colors.bar, 'stroke-width': 2.5, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
+
+            points.forEach((point) => {
+                if (point.count > 0) {
+                    svg.append(node('circle', { cx: point.x, cy: point.y, r: 3, fill: colors.bar }));
+                }
+                const hit = node('rect', { x: point.x - step / 2, y: TOP, width: step, height: PLOT_HEIGHT, fill: 'transparent' });
+                hit.append(node('title', {}, point.when.toLocaleString() + ': ' + point.count + (point.count === 1 ? ' request' : ' requests')));
+                svg.append(hit);
+
+                if (point.when.getHours() === 0 || point.index === 0) {
+                    const label = point.when.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                    svg.append(node('text', { x: LEFT + point.index * step, y: baseline + 22, fill: colors.text, 'font-size': 11 }, label));
                 }
             });
 
