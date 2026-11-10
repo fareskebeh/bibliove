@@ -82,8 +82,8 @@
             <div class="flex flex-col gap-4 min-w-0">
                 <p class="font-black text-3xl">Usage History</p>
                 {% if usage_keys %}
-                <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                    <label class="flex flex-col gap-1 w-full sm:w-72">
+                <div class="flex flex-wrap items-end gap-4">
+                    <label class="flex flex-col gap-1 w-full sm:w-auto sm:min-w-[11rem]">
                         <span class="text-sm font-semibold" :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">API key</span>
                         <select id="usage-key" class="p-2 rounded-lg border shadow-sm outline-none transition duration-150"
                                 :class="isDark ? 'bg-neutral-800 border-neutral-700 text-white' : 'bg-white border-neutral-300 text-black'">
@@ -92,7 +92,7 @@
                             {% endfor %}
                         </select>
                     </label>
-                    <label class="flex flex-col gap-1 w-full sm:w-56">
+                    <label class="flex flex-col gap-1 w-full sm:w-auto sm:min-w-[11rem]">
                         <span class="text-sm font-semibold" :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">Scope</span>
                         <select id="usage-scope" class="p-2 rounded-lg border shadow-sm outline-none transition duration-150"
                                 :class="isDark ? 'bg-neutral-800 border-neutral-700 text-white' : 'bg-white border-neutral-300 text-black'">
@@ -101,8 +101,13 @@
                             <option value="year">Per year</option>
                         </select>
                     </label>
-                    <p id="usage-total" class="text-sm" :class="isDark ? 'text-neutral-400' : 'text-neutral-600'"></p>
+                    <label id="usage-month-field" class="hidden w-full sm:w-auto sm:min-w-[11rem]">
+                        <span class="block mb-1 text-sm font-semibold" :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">Month</span>
+                        <select id="usage-month" class="w-full p-2 rounded-lg border shadow-sm outline-none transition duration-150"
+                                :class="isDark ? 'bg-neutral-800 border-neutral-700 text-white' : 'bg-white border-neutral-300 text-black'"></select>
+                    </label>
                 </div>
+                                <p id="usage-total" class="text-sm" :class="isDark ? 'text-neutral-400' : 'text-neutral-600'"></p>
                 <div id="usage-frame" class="relative max-w-full min-w-0">
                     <div id="usage-scroll" class="overflow-x-auto rounded-xl border p-4"
                          :class="isDark ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-neutral-300'">
@@ -175,9 +180,15 @@
         }
 
         const scopeSelect = document.getElementById('usage-scope');
+        const monthField = document.getElementById('usage-month-field');
+        const monthSelect = document.getElementById('usage-month');
         const scroller = document.getElementById('usage-scroll');
         const svg = document.getElementById('usage-chart');
         const totalLabel = document.getElementById('usage-total');
+        const tooltip = document.getElementById('usage-tooltip');
+        const tooltipWhen = document.getElementById('usage-tooltip-when');
+        const tooltipCount = document.getElementById('usage-tooltip-count');
+        const frame = document.getElementById('usage-frame');
         const isDark = localStorage.getItem('theme') === 'dark';
         const colors = {
             line: '#ea580c',
@@ -201,7 +212,6 @@
             month: {
                 step: 40,
                 tickEvery: 5,
-                window: 'last 30 days',
                 short: (d) => d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
                 full: (d) => d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }),
             },
@@ -214,14 +224,19 @@
             },
         };
 
-        const tooltip = document.getElementById('usage-tooltip');
-        const tooltipWhen = document.getElementById('usage-tooltip-when');
-        const tooltipCount = document.getElementById('usage-tooltip-count');
-        const frame = document.getElementById('usage-frame');
-        let activePoints = [];
-        let activeScope = null;
-        let guide = null;
-        let highlight = null;
+        const monthNames = usageKeys[0].series.months;
+
+        function monthTitle(series) {
+            return new Date(series.edges[0]).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+        }
+
+        monthNames.forEach((series, index) => {
+            const option = document.createElement('option');
+            option.value = String(index);
+            option.textContent = monthTitle(series);
+            monthSelect.append(option);
+        });
+        monthSelect.value = String(monthNames.length - 1);
 
         function node(name, attrs, text) {
             const element = document.createElementNS(NS, name);
@@ -232,9 +247,22 @@
             return element;
         }
 
+        let activePoints = [];
+        let activeScope = null;
+        let guide = null;
+        let highlight = null;
+
+        function hideTooltip() {
+            tooltip.classList.add('hidden');
+            if (guide) {
+                guide.setAttribute('visibility', 'hidden');
+                highlight.setAttribute('visibility', 'hidden');
+            }
+        }
+
         function draw(key, scopeName) {
             const scope = scopes[scopeName];
-            const series = key.series[scopeName];
+            const series = scopeName === 'month' ? key.series.months[Number(monthSelect.value)] : key.series[scopeName];
             const counts = series.counts;
             const edges = series.edges;
             const max = Math.max(1, ...counts);
@@ -259,7 +287,6 @@
                 y: baseline - (count / max) * PLOT_HEIGHT,
                 count: count,
                 start: new Date(edges[index]),
-                end: new Date(edges[index + 1]),
                 index: index,
             }));
 
@@ -289,16 +316,9 @@
             hideTooltip();
 
             const total = counts.reduce((sum, count) => sum + count, 0);
-            totalLabel.textContent = total + (total === 1 ? ' request' : ' requests') + ' in the ' + scope.window;
+            const period = scopeName === 'month' ? 'in ' + monthTitle(series) : scope.window;
+            totalLabel.textContent = total + (total === 1 ? ' request' : ' requests') + ' ' + period;
             scroller.scrollLeft = scroller.scrollWidth;
-        }
-
-        function hideTooltip() {
-            tooltip.classList.add('hidden');
-            if (guide) {
-                guide.setAttribute('visibility', 'hidden');
-                highlight.setAttribute('visibility', 'hidden');
-            }
         }
 
         function pointAt(clientX) {
@@ -345,20 +365,22 @@
             highlight.setAttribute('visibility', 'visible');
         }
 
-        svg.addEventListener('pointermove', showTooltip);
-        svg.addEventListener('pointerleave', hideTooltip);
-        scroller.addEventListener('scroll', hideTooltip, { passive: true });
-
         function selectedKey() {
             return usageKeys.find((key) => String(key.id) === keySelect.value) || usageKeys[0];
         }
 
         function refresh() {
-            draw(selectedKey(), scopeSelect.value);
+            const scopeName = scopeSelect.value;
+            monthField.classList.toggle('hidden', scopeName !== 'month');
+            draw(selectedKey(), scopeName);
         }
 
+        svg.addEventListener('pointermove', showTooltip);
+        svg.addEventListener('pointerleave', hideTooltip);
+        scroller.addEventListener('scroll', hideTooltip, { passive: true });
         keySelect.addEventListener('change', refresh);
         scopeSelect.addEventListener('change', refresh);
+        monthSelect.addEventListener('change', refresh);
         refresh();
     })();
 </script>
