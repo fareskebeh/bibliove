@@ -251,7 +251,7 @@ def auth_routes_init(app):
                                 "from" : "onboarding@resend.dev",
                                 "to" : email,
                                 "subject" : "Your Bibliove password reset link",
-                                "html" : f"<h1>Visit this link to reset your password</h1> <p>http://127.0.0.1:8000/reset-password?token={url_token}</p>"
+                                "html" : f"<h1>Visit this link to reset your password</h1> <p>{app.config['PUBLIC_BASE_URL']}/reset-password?token={url_token}</p>"
                             })
             db.session.add(token)
             db.session.commit()

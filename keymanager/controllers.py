@@ -10,14 +10,6 @@ import nemony as nm
 
 def key_routes_init(app):
     
-    @app.route("/count/<int:user_id>")
-    @limiter.limit('30/minute')
-    def count_keys_for_user(user_id):
-        user = User.query.get(user_id)
-        if user is None:
-            return {"error": "User not found"}, 404
-        return str(user.key_count)
-    
     @app.route("/keys/create", methods=["POST"])
     @limiter.limit('20/minute')
     def create_key():

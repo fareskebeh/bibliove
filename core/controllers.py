@@ -54,7 +54,9 @@ def core_routes_init(app):
                     extract_text,
                     temp_path,
                     match.user_id,
-                    usage.id
+                    usage.id,
+                    job_timeout=900,
+                    result_ttl=86400,
                 )
                 return {
                     "job_id": job.id,

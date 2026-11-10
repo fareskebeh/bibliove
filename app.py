@@ -12,6 +12,7 @@ from payments.models import Plan
 from extensions import limiter
 from payments.controllers import payment_routes_init
 from flask_wtf.csrf import generate_csrf
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 load_dotenv()
 
@@ -23,6 +24,14 @@ app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 app.config['STRIPE_SECRET_KEY'] = os.getenv('STRIPE_SECRET_KEY')
 app.config['STRIPE_PUBLISHABLE_KEY'] = os.getenv('STRIPE_PUBLISHABLE_KEY')
 app.config['WTF_CSRF_TIME_LIMIT'] = None
+app.config['PUBLIC_BASE_URL'] = os.getenv('PUBLIC_BASE_URL', 'http://127.0.0.1:8000').rstrip('/')
+app.config['SESSION_COOKIE_SECURE'] = os.getenv('SECURE_COOKIES', 'False') == 'True'
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['REMEMBER_COOKIE_SECURE'] = app.config['SESSION_COOKIE_SECURE']
+app.config['REMEMBER_COOKIE_HTTPONLY'] = True
+app.config['MAX_CONTENT_LENGTH'] = int(os.getenv('MAX_UPLOAD_MB', '50')) * 1024 * 1024
+if os.getenv('BEHIND_PROXY', 'False') == 'True':
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 app.jinja_env.globals['csrf_token'] = generate_csrf
 
 
