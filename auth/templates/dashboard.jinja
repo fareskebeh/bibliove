@@ -92,13 +92,22 @@
                             {% endfor %}
                         </select>
                     </label>
+                    <label class="flex flex-col gap-1 w-full sm:w-56">
+                        <span class="text-sm font-semibold" :class="isDark ? 'text-neutral-300' : 'text-neutral-700'">Scope</span>
+                        <select id="usage-scope" class="p-2 rounded-lg border shadow-sm outline-none transition duration-150"
+                                :class="isDark ? 'bg-neutral-800 border-neutral-700 text-white' : 'bg-white border-neutral-300 text-black'">
+                            <option value="day">Per day</option>
+                            <option value="month" selected>Per month</option>
+                            <option value="year">Per year</option>
+                        </select>
+                    </label>
                     <p id="usage-total" class="text-sm" :class="isDark ? 'text-neutral-400' : 'text-neutral-600'"></p>
                 </div>
                 <div id="usage-scroll" class="max-w-full min-w-0 overflow-x-auto rounded-xl border p-4"
                      :class="isDark ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-neutral-300'">
                     <svg id="usage-chart" role="img" aria-label="Requests per hour over the last 7 days" class="block"></svg>
                 </div>
-                <p class="text-xs" :class="isDark ? 'text-neutral-500' : 'text-neutral-500'">Scroll sideways for earlier hours. Each point is one hour of accepted requests, shown in your browser's time zone.</p>
+                <p class="text-xs" :class="isDark ? 'text-neutral-500' : 'text-neutral-500'">Scroll sideways for earlier periods. Each point counts accepted requests in one period: an hour, a day or a month, depending on the scope.</p>
                 {% else %}
                 <p :class="isDark ? 'text-neutral-400' : 'text-neutral-600'">Create a key to start recording requests.</p>
                 {% endif %}
@@ -153,28 +162,50 @@
 <script>
     (function () {
         const usageKeys = {{ usage_keys|tojson }};
-        const startMs = {{ usage_start_ms }};
-        const select = document.getElementById('usage-key');
-        if (!select || !usageKeys.length) {
+        const keySelect = document.getElementById('usage-key');
+        if (!keySelect || !usageKeys.length) {
             return;
         }
 
+        const scopeSelect = document.getElementById('usage-scope');
         const scroller = document.getElementById('usage-scroll');
         const svg = document.getElementById('usage-chart');
         const totalLabel = document.getElementById('usage-total');
         const isDark = localStorage.getItem('theme') === 'dark';
         const colors = {
-            bar: '#ea580c',
+            line: '#ea580c',
             grid: isDark ? '#404040' : '#d4d4d4',
             text: isDark ? '#a3a3a3' : '#525252',
         };
-        const BAR_WIDTH = 14;
-        const BAR_GAP = 6;
         const LEFT = 44;
         const TOP = 16;
         const PLOT_HEIGHT = 180;
         const BOTTOM = 44;
         const NS = 'http://www.w3.org/2000/svg';
+
+        const scopes = {
+            day: {
+                step: 40,
+                tickEvery: 3,
+                window: 'last 24 hours',
+                short: (d) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                full: (d) => d.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+            },
+            month: {
+                step: 40,
+                tickEvery: 5,
+                window: 'last 30 days',
+                short: (d) => d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+                full: (d) => d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }),
+            },
+            year: {
+                step: 90,
+                tickEvery: 1,
+                window: 'last 12 months',
+                short: (d) => d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' }),
+                full: (d) => d.toLocaleDateString(undefined, { month: 'long', year: 'numeric' }),
+            },
+        };
 
         function node(name, attrs, text) {
             const element = document.createElementNS(NS, name);
@@ -185,16 +216,16 @@
             return element;
         }
 
-        function hourLabel(index) {
-            return new Date(startMs + index * 3600000);
-        }
-
-        function draw(key) {
-            const counts = key.counts;
+        function draw(key, scopeName) {
+            const scope = scopes[scopeName];
+            const series = key.series[scopeName];
+            const counts = series.counts;
+            const edges = series.edges;
             const max = Math.max(1, ...counts);
-            const step = BAR_WIDTH + BAR_GAP;
+            const step = scope.step;
             const width = LEFT + counts.length * step + 16;
-            const height = TOP + PLOT_HEIGHT + BOTTOM;
+            const baseline = TOP + PLOT_HEIGHT;
+            const height = baseline + BOTTOM;
 
             svg.replaceChildren();
             svg.setAttribute('width', width);
@@ -202,55 +233,57 @@
             svg.setAttribute('viewBox', '0 0 ' + width + ' ' + height);
 
             [0, Math.ceil(max / 2), max].forEach((value) => {
-                const y = TOP + PLOT_HEIGHT - (value / max) * PLOT_HEIGHT;
+                const y = baseline - (value / max) * PLOT_HEIGHT;
                 svg.append(node('line', { x1: LEFT, x2: width, y1: y, y2: y, stroke: colors.grid, 'stroke-dasharray': value === 0 ? '0' : '4 4' }));
                 svg.append(node('text', { x: LEFT - 10, y: y + 4, 'text-anchor': 'end', fill: colors.text, 'font-size': 11 }, String(value)));
             });
 
-            const baseline = TOP + PLOT_HEIGHT;
             const points = counts.map((count, index) => ({
-                x: LEFT + index * step + BAR_WIDTH / 2,
+                x: LEFT + index * step + step / 2,
                 y: baseline - (count / max) * PLOT_HEIGHT,
                 count: count,
-                when: hourLabel(index),
+                start: new Date(edges[index]),
+                end: new Date(edges[index + 1]),
                 index: index,
             }));
 
-            const line = points.map((point, i) => (i === 0 ? 'M' : 'L') + point.x + ' ' + point.y).join(' ');
+            const line = points.map((point, index) => (index === 0 ? 'M' : 'L') + point.x + ' ' + point.y).join(' ');
             const first = points[0];
             const last = points[points.length - 1];
-            const area = line + ' L' + last.x + ' ' + baseline + ' L' + first.x + ' ' + baseline + ' Z';
-
-            svg.append(node('path', { d: area, fill: colors.bar, 'fill-opacity': 0.15, stroke: 'none' }));
-            svg.append(node('path', { d: line, fill: 'none', stroke: colors.bar, 'stroke-width': 2.5, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
+            svg.append(node('path', { d: line + ' L' + last.x + ' ' + baseline + ' L' + first.x + ' ' + baseline + ' Z', fill: colors.line, 'fill-opacity': 0.15, stroke: 'none' }));
+            svg.append(node('path', { d: line, fill: 'none', stroke: colors.line, 'stroke-width': 2.5, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
 
             points.forEach((point) => {
                 if (point.count > 0) {
-                    svg.append(node('circle', { cx: point.x, cy: point.y, r: 3, fill: colors.bar }));
+                    svg.append(node('circle', { cx: point.x, cy: point.y, r: 3, fill: colors.line }));
                 }
-                const hit = node('rect', { x: point.x - step / 2, y: TOP, width: step, height: PLOT_HEIGHT, fill: 'transparent' });
-                hit.append(node('title', {}, point.when.toLocaleString() + ': ' + point.count + (point.count === 1 ? ' request' : ' requests')));
+                const hit = node('rect', { x: LEFT + point.index * step, y: TOP, width: step, height: PLOT_HEIGHT, fill: 'transparent' });
+                hit.append(node('title', {}, scope.full(point.start) + ': ' + point.count + (point.count === 1 ? ' request' : ' requests')));
                 svg.append(hit);
 
-                if (point.when.getHours() === 0 || point.index === 0) {
-                    const label = point.when.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-                    svg.append(node('text', { x: LEFT + point.index * step, y: baseline + 22, fill: colors.text, 'font-size': 11 }, label));
+                if (point.index % scope.tickEvery === 0) {
+                    svg.append(node('text', { x: LEFT + point.index * step, y: baseline + 22, fill: colors.text, 'font-size': 11 }, scope.short(point.start)));
                 }
             });
 
-            svg.append(node('line', { x1: LEFT, x2: width, y1: TOP + PLOT_HEIGHT, y2: TOP + PLOT_HEIGHT, stroke: colors.text, 'stroke-width': 1 }));
+            svg.append(node('line', { x1: LEFT, x2: width, y1: baseline, y2: baseline, stroke: colors.text, 'stroke-width': 1 }));
 
             const total = counts.reduce((sum, count) => sum + count, 0);
-            totalLabel.textContent = total + (total === 1 ? ' request' : ' requests') + ' in the last 7 days';
+            totalLabel.textContent = total + (total === 1 ? ' request' : ' requests') + ' in the ' + scope.window;
             scroller.scrollLeft = scroller.scrollWidth;
         }
 
         function selectedKey() {
-            return usageKeys.find((key) => String(key.id) === select.value) || usageKeys[0];
+            return usageKeys.find((key) => String(key.id) === keySelect.value) || usageKeys[0];
         }
 
-        select.addEventListener('change', () => draw(selectedKey()));
-        draw(selectedKey());
+        function refresh() {
+            draw(selectedKey(), scopeSelect.value);
+        }
+
+        keySelect.addEventListener('change', refresh);
+        scopeSelect.addEventListener('change', refresh);
+        refresh();
     })();
 </script>
 {% endblock %}
