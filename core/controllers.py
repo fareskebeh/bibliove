@@ -59,6 +59,9 @@ def core_routes_init(app):
                 return {"status": "queued"}
             elif job.is_started:
                 return {"status": "processing"}
+            elif job.is_failed:
+                return {"status": "failed"}, 500
+            return {"status": job.get_status()}
         except NoSuchJobError:
             return {"status": "not_found"}, 404
 

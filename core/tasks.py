@@ -13,6 +13,8 @@ DB_URL = os.getenv("DB_URL")
 engine = create_engine(DB_URL)
 Session = sessionmaker(bind=engine)
 
+PAGE_BREAK = "pagebreak_pagebreak"
+
 def extract_text(fp, user_id):
     session = Session()
     try:
@@ -34,6 +36,9 @@ def extract_text(fp, user_id):
                 if remaining < len(doc):
                     status="partial"
                     pages_to_process=remaining
+                else:
+                    status="complete"
+                    pages_to_process=len(doc)
             else:
                 status="complete"
                 pages_to_process = len(doc)
@@ -45,13 +50,13 @@ def extract_text(fp, user_id):
                     content = page.get_text()
                     if content:
                         processed+=1
-                        text += content + "pagebreak_pagebreak"
+                        text += content + PAGE_BREAK
                     else:
                         pix = page.get_pixmap(dpi=128)
                         img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
                         ocr_text = pytesseract.image_to_string(img, lang='eng')
                         if ocr_text:
-                            text += ocr_text
+                            text += ocr_text + PAGE_BREAK
                             processed+=1
                 user.master_quota += processed
                 session.commit()
@@ -59,7 +64,7 @@ def extract_text(fp, user_id):
                 status="error"
                 session.rollback() 
                 return {"error": "An error occurred while processing the document, Try again.", "status":status, "code": 500}
-            page_lst = text.split("pagebreak_pagebreak")
+            page_lst = text.split(PAGE_BREAK)[:-1]
             return {"text": page_lst, "pages_processed": processed, "status":status, "code": 200}
     except Exception as e:
         session.rollback()
