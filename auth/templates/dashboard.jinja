@@ -260,6 +260,56 @@
             }
         }
 
+        function monotonePath(points) {
+            if (points.length === 1) {
+                return 'M' + points[0].x + ' ' + points[0].y;
+            }
+
+            const last = points.length - 1;
+            const dx = [];
+            const dy = [];
+            const slopes = [];
+            for (let i = 0; i < last; i++) {
+                dx.push(points[i + 1].x - points[i].x);
+                dy.push(points[i + 1].y - points[i].y);
+                slopes.push(dy[i] / dx[i]);
+            }
+
+            const tangents = new Array(points.length);
+            tangents[0] = slopes[0];
+            tangents[last] = slopes[last - 1];
+            for (let i = 1; i < last; i++) {
+                tangents[i] = slopes[i - 1] * slopes[i] <= 0 ? 0 : (slopes[i - 1] + slopes[i]) / 2;
+            }
+
+            for (let i = 0; i < last; i++) {
+                if (slopes[i] === 0) {
+                    tangents[i] = 0;
+                    tangents[i + 1] = 0;
+                    continue;
+                }
+                const a = tangents[i] / slopes[i];
+                const b = tangents[i + 1] / slopes[i];
+                const magnitude = a * a + b * b;
+                if (magnitude > 9) {
+                    const scale = 3 / Math.sqrt(magnitude);
+                    tangents[i] = scale * a * slopes[i];
+                    tangents[i + 1] = scale * b * slopes[i];
+                }
+            }
+
+            let path = 'M' + points[0].x + ' ' + points[0].y;
+            for (let i = 0; i < last; i++) {
+                const reach = dx[i] / 3;
+                const firstX = points[i].x + reach;
+                const firstY = points[i].y + tangents[i] * reach;
+                const secondX = points[i + 1].x - reach;
+                const secondY = points[i + 1].y - tangents[i + 1] * reach;
+                path += ' C' + firstX + ' ' + firstY + ' ' + secondX + ' ' + secondY + ' ' + points[i + 1].x + ' ' + points[i + 1].y;
+            }
+            return path;
+        }
+
         function draw(key, scopeName) {
             const scope = scopes[scopeName];
             const series = scopeName === 'month' ? key.series.months[Number(monthSelect.value)] : key.series[scopeName];
@@ -290,7 +340,7 @@
                 index: index,
             }));
 
-            const line = points.map((point, index) => (index === 0 ? 'M' : 'L') + point.x + ' ' + point.y).join(' ');
+            const line = monotonePath(points);
             const first = points[0];
             const last = points[points.length - 1];
             svg.append(node('path', { d: line + ' L' + last.x + ' ' + baseline + ' L' + first.x + ' ' + baseline + ' Z', fill: colors.line, 'fill-opacity': 0.15, stroke: 'none' }));
