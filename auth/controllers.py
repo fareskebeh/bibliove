@@ -112,12 +112,9 @@ def auth_routes_init(app):
                     db.session.commit()
                     session.pop('pending_verification_code', None)
                     chosen_plan = (session.get('chosen_plan_id') or '').strip().lower()
-                    if not chosen_plan or chosen_plan == 'free':
-                        flash("Email verified! Please log in.", "success")
-                        session.pop('pending_verification_email', None)
-                        return redirect("/login")
-                    else:
-                        return redirect('/dummy-checkout')
+                    flash("Email verified! Please log in" + ("" if not chosen_plan or chosen_plan == 'free' else " to choose your plan") + ".", "success")
+                    session.pop('pending_verification_email', None)
+                    return redirect("/login")
                 else:
                     flash("User not found", "error")
                     return redirect("/register")
