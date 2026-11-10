@@ -1,4 +1,7 @@
 from keymanager.models import ApiKey, ApiUsage
+from auth.models import User
+from auth.quota import apply_quota_reset
+from payments.models import Plan, FREE_PLAN_ID
 from extensions import limiter
 from db.extensions import db
 from hashlib import sha256
@@ -30,6 +33,16 @@ def core_routes_init(app):
             query_hash= str(sha256(key.encode()).hexdigest())
             match=ApiKey.query.filter(ApiKey.key_hash==query_hash).first()
             if match:
+                user = db.session.get(User, match.user_id)
+                plan = db.session.get(Plan, user.plan_id)
+                is_free = user.plan_id == FREE_PLAN_ID
+                if apply_quota_reset(user, is_free):
+                    db.session.commit()
+                if is_free and plan.quota_limit - user.master_quota <= 0:
+                    return make_response(jsonify({
+                        "error": "Your free allowance is used up. Upgrade to a paid plan to process more pages",
+                        "code": 429,
+                    }), 429)
                 usage = ApiUsage(key_id=match.id, user_id=match.user_id)
                 db.session.add(usage)
                 db.session.commit()

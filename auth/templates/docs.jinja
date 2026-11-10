@@ -218,7 +218,7 @@ pages = body["result"]["text"]{% endraw %}</code></pre>
                         </tr>
                         <tr class="border-t" :class="isDark ? 'border-neutral-800' : 'border-neutral-200'">
                             <td class="p-3 font-mono">429</td>
-                            <td class="p-3">Too many requests from your IP address. Wait and retry. A 429 on a job result means the Free allowance is used up.</td>
+                            <td class="p-3">Too many requests from your IP address. Wait and retry. A 429 from <span class="font-mono">/extract</span> means the Free allowance is used up, and the file is not queued. A 429 on a job result means the allowance ran out while the document was being processed.</td>
                         </tr>
                         <tr class="border-t" :class="isDark ? 'border-neutral-800' : 'border-neutral-200'">
                             <td class="p-3 font-mono">500</td>
